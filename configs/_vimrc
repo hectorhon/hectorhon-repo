@@ -1,0 +1,39 @@
+execute pathogen#infect()
+
+noremap <Up> <NOP>
+noremap <Down> <NOP>
+noremap <Left> <NOP>
+noremap <Right> <NOP>
+nnoremap <C-Tab> gt<CR>
+nnoremap <C-S-Tab> gT<CR>
+nnoremap <F7> :setlocal spell!<CR>
+nnoremap <F8> :set fdm=syntax<CR>
+nnoremap <F9> :set fdm=manual<CR>:normal zn<CR>
+nnoremap <F10> :set fdm=manual<CR>
+
+set nobackup
+set noswapfile
+
+set ruler
+filetype plugin indent on
+syntax on
+set tabstop=4 shiftwidth=4
+set linebreak
+set number
+"set foldmethod=syntax
+"set foldnestmax=1
+"autocmd BufRead * normal zn
+set matchpairs+=<:>
+set incsearch
+set hlsearch
+set ignorecase
+set nrformats="decimal"
+
+if has('gui_running')
+  set guifont=Consolas:h10:cANSI
+  colorscheme default
+  set background=light
+  "au GUIEnter * simalt ~x
+endif
+set guicursor+=n-v-c-i:blinkon0
+
