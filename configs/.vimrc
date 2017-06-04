@@ -1,4 +1,3 @@
-execute pathogen#infect()
 syntax on
 filetype plugin indent on
 
@@ -8,8 +7,6 @@ set noswapfile
 set wrap
 set ruler
 set number
-set lines=48
-"set colorcolumn=80
 set hls
 set backspace=indent,eol,start
 set autoindent
@@ -19,9 +16,5 @@ set expandtab
 set incsearch
 set ignorecase
 
-set guifont=Consolas:h10:cANSI
-set guicursor+=a:blinkon0
-set guioptions-=m
-set guioptions-=T
-
 let g:netrw_liststyle=3
+let loaded_matchparen = 1
