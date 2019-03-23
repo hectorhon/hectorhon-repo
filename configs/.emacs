@@ -73,6 +73,16 @@
 
 
 
+;; copy current file name
+(defun copy-filename ()
+  (interactive)
+  (let ((filename (buffer-file-name (window-buffer (minibuffer-selected-window)))))
+    (message filename)
+    (kill-new filename)))
+(global-set-key (kbd "C-c C-z") 'copy-filename)
+
+
+
 ;; melpa repository
 (require 'package)
 (let* ((no-ssl (and (memq system-type '(windows-nt ms-dos))
