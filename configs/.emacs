@@ -54,3 +54,30 @@
     (message filename)
     (kill-new filename)))
 (global-set-key (kbd "C-c C-z") 'copy-filename)
+
+
+
+;; scroll window line by line
+(global-set-key (kbd "M-<up>") 'scroll-down-line)
+(global-set-key (kbd "M-<down>") 'scroll-up-line)
+(global-set-key (kbd "<Scroll_Lock>") 'scroll-lock-mode)
+
+
+
+;; jump to scratch buffer
+(defun switch-to-scratch-buffer ()
+  (interactive)
+  (switch-to-buffer "*scratch*"))
+(global-set-key (kbd "<f1>") 'switch-to-scratch-buffer)
+
+
+
+;; Shortcut key for hs-minor-mode toggle hiding
+(global-set-key (kbd "C-`") 'hs-toggle-hiding)
+
+
+
+;; browse kill ring
+(global-set-key "\C-cy" '(lambda ()
+                           (interactive)
+                           (popup-menu 'yank-menu)))
