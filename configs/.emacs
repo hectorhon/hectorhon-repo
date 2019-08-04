@@ -16,9 +16,7 @@
  '(dired-listing-switches "-al --sort=extension")
  '(display-battery-mode t)
  '(display-time-mode t)
- '(eshell-visual-commands
-   (quote
-    ("vi" "screen" "top" "less" "more" "lynx" "ncftp" "pine" "tin" "trn" "elm" "npm")))
+ '(eshell-visual-subcommands (quote (("npm" "install" "run"))))
  '(global-auto-revert-mode t)
  '(global-display-line-numbers-mode t)
  '(global-hl-line-mode nil)
@@ -29,6 +27,7 @@
  '(inhibit-startup-screen t)
  '(initial-scratch-message nil)
  '(js-indent-level 2)
+ '(magit-save-repository-buffers nil)
  '(make-backup-files nil)
  '(mark-ring-max 1)
  '(package-selected-packages
@@ -146,6 +145,7 @@ There are two things you can do about this warning:
 (global-set-key (kbd "C-x C-f") 'helm-find-files)
 (global-set-key (kbd "C-x b") 'helm-mini)
 (global-set-key (kbd "C-c y") 'helm-show-kill-ring)
+(global-set-key (kbd "M-s o") 'helm-occur)
 (projectile-global-mode)
 (setq projectile-completion-system 'helm)
 (helm-projectile-on)
