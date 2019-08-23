@@ -1,3 +1,25 @@
+;; set up melpa repository
+(require 'package)
+(let* ((no-ssl (and (memq system-type '(windows-nt ms-dos))
+                    (not (gnutls-available-p))))
+       (proto (if no-ssl "http" "https")))
+  (when no-ssl
+    (warn "\
+Your version of Emacs does not support SSL connections,
+which is unsafe because it allows man-in-the-middle attacks.
+There are two things you can do about this warning:
+1. Install an Emacs version that does support SSL and be safe.
+2. Remove this warning from your init file so you won't see it again."))
+  ;; Comment/uncomment these two lines to enable/disable MELPA and MELPA Stable as desired
+  (add-to-list 'package-archives (cons "melpa" (concat proto "://melpa.org/packages/")) t)
+  ;;(add-to-list 'package-archives (cons "melpa-stable" (concat proto "://stable.melpa.org/packages/")) t)
+  (when (< emacs-major-version 24)
+    ;; For important compatibility libraries like cl-lib
+    (add-to-list 'package-archives (cons "gnu" (concat proto "://elpa.gnu.org/packages/")))))
+(package-initialize)
+
+
+
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -10,19 +32,23 @@
  '(auto-save-default nil)
  '(blink-cursor-mode nil)
  '(column-number-mode t)
+ '(company-quickhelp-color-background "#4F4F4F")
+ '(company-quickhelp-color-foreground "#DCDCCC")
  '(compilation-ask-about-save nil)
  '(create-lockfiles nil)
- '(custom-enabled-themes (quote (dichromacy)))
+ '(custom-enabled-themes (quote (zenburn)))
+ '(custom-safe-themes
+   (quote
+    ("a7051d761a713aaf5b893c90eaba27463c791cd75d7257d3a8e66b0c8c346e77" default)))
  '(dired-listing-switches "-al --sort=extension")
- '(display-battery-mode t)
- '(display-time-mode t)
  '(eshell-visual-subcommands (quote (("npm" "install" "run"))))
+ '(fci-rule-color "#383838")
+ '(flycheck-global-modes (quote (not emacs-lisp-mode)))
  '(global-auto-revert-mode t)
  '(global-display-line-numbers-mode t)
  '(global-hl-line-mode nil)
  '(global-mark-ring-max 1)
  '(grep-command "grep --color -nHr --null --exclude-dir=node_modules -e ")
- '(helm-grep-default-command "xxx")
  '(indent-tabs-mode nil)
  '(inhibit-startup-screen t)
  '(initial-scratch-message nil)
@@ -30,18 +56,53 @@
  '(magit-save-repository-buffers nil)
  '(make-backup-files nil)
  '(mark-ring-max 1)
+ '(menu-bar-mode nil)
+ '(nrepl-message-colors
+   (quote
+    ("#CC9393" "#DFAF8F" "#F0DFAF" "#7F9F7F" "#BFEBBF" "#93E0E3" "#94BFF3" "#DC8CC3")))
  '(package-selected-packages
    (quote
-    (magit helm-projectile projectile helm web-mode slime)))
+    (flycheck zenburn-theme magit helm-projectile projectile helm web-mode slime)))
+ '(pdf-view-midnight-colors (quote ("#DCDCCC" . "#383838")))
  '(projectile-globally-ignored-directories
    (quote
     (".idea" ".ensime_cache" ".eunit" ".git" ".hg" ".fslckout" "_FOSSIL_" ".bzr" "_darcs" ".tox" ".svn" ".stack-work" "node_modules")))
+ '(scroll-bar-mode nil)
  '(show-paren-delay 0)
  '(show-paren-mode t)
  '(slime-load-failed-fasl (quote never))
  '(tool-bar-mode nil)
  '(tooltip-mode nil)
- '(truncate-lines t))
+ '(truncate-lines t)
+ '(vc-annotate-background "#2B2B2B")
+ '(vc-annotate-color-map
+   (quote
+    ((20 . "#BC8383")
+     (40 . "#CC9393")
+     (60 . "#DFAF8F")
+     (80 . "#D0BF8F")
+     (100 . "#E0CF9F")
+     (120 . "#F0DFAF")
+     (140 . "#5F7F5F")
+     (160 . "#7F9F7F")
+     (180 . "#8FB28F")
+     (200 . "#9FC59F")
+     (220 . "#AFD8AF")
+     (240 . "#BFEBBF")
+     (260 . "#93E0E3")
+     (280 . "#6CA0A3")
+     (300 . "#7CB8BB")
+     (320 . "#8CD0D3")
+     (340 . "#94BFF3")
+     (360 . "#DC8CC3"))))
+ '(vc-annotate-very-old-color "#DC8CC3")
+ '(web-mode-enable-auto-pairing nil))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(default ((t (:family "DejaVu Sans Mono" :foundry "unknown" :slant normal :weight normal :height 98 :width normal)))))
 
 
 
@@ -98,35 +159,6 @@
 
 
 
-;; browse kill ring
-(global-set-key "\C-cy" '(lambda ()
-                           (interactive)
-                           (popup-menu 'yank-menu)))
-
-
-
-;; set up melpa repository
-(require 'package)
-(let* ((no-ssl (and (memq system-type '(windows-nt ms-dos))
-                    (not (gnutls-available-p))))
-       (proto (if no-ssl "http" "https")))
-  (when no-ssl
-    (warn "\
-Your version of Emacs does not support SSL connections,
-which is unsafe because it allows man-in-the-middle attacks.
-There are two things you can do about this warning:
-1. Install an Emacs version that does support SSL and be safe.
-2. Remove this warning from your init file so you won't see it again."))
-  ;; Comment/uncomment these two lines to enable/disable MELPA and MELPA Stable as desired
-  (add-to-list 'package-archives (cons "melpa" (concat proto "://melpa.org/packages/")) t)
-  ;;(add-to-list 'package-archives (cons "melpa-stable" (concat proto "://stable.melpa.org/packages/")) t)
-  (when (< emacs-major-version 24)
-    ;; For important compatibility libraries like cl-lib
-    (add-to-list 'package-archives (cons "gnu" (concat proto "://elpa.gnu.org/packages/")))))
-(package-initialize)
-
-
-
 ;; set up magit
 (global-set-key (kbd "C-x g") 'magit-status)
 
@@ -155,18 +187,43 @@ There are two things you can do about this warning:
 ;; set up slime
 (setq inferior-lisp-program "/usr/local/bin/sbcl")
 (setq slime-contribs '(slime-fancy))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(default ((t (:family "DejaVu Sans Mono" :foundry "unknown" :slant normal :weight normal :height 98 :width normal)))))
 
 
 
 ;; set up web mode
 (require 'web-mode)
 (defun my-web-mode-hook ()
-  (setq web-mode-code-indent-offset 2))
+  (setq web-mode-code-indent-offset 2)
+  (setq web-mode-enable-auto-quoting nil))
 (add-hook 'web-mode-hook 'my-web-mode-hook)
 (add-to-list 'auto-mode-alist '("\\.hbs\\'" . web-mode))
+(add-to-list 'auto-mode-alist '("\\.jsx\\'" . web-mode))
+(add-to-list 'web-mode-comment-formats '("jsx" . "//" ))
+
+
+
+;; set up flycheck
+(add-hook 'after-init-hook #'global-flycheck-mode)
+
+;; flycheck use locally installed eslint
+(defvar node-modules-bin-path nil)
+(defun projectile-add-node-modules-bin-to-exec-path ()
+  (when (string-equal "npm" (projectile-project-type))
+    (setq node-modules-bin-path
+          (concat (projectile-project-root) "node_modules/.bin/"))
+    (setq exec-path
+          (cons node-modules-bin-path exec-path))))
+(defun projectile-remove-node-modules-bin-from-exec-path ()
+  (when node-modules-bin-path
+    (setq exec-path (delete node-modules-bin-path exec-path))
+    (setq node-modules-bin-path nil)))
+(add-hook 'projectile-before-switch-project-hook
+          #'projectile-remove-node-modules-bin-from-exec-path)
+(add-hook 'projectile-after-switch-project-hook
+          #'projectile-add-node-modules-bin-to-exec-path)
+(setq projectile-switch-project-action #'projectile-dired)
+(defun reselect-flycheck-javascript-eslint ()
+  (when node-modules-bin-path
+    (flycheck-reset-enabled-checker 'javascript-eslint)
+    (flycheck-select-checker 'javascript-eslint)))
+(add-hook 'js-mode-hook #'reselect-flycheck-javascript-eslint)
