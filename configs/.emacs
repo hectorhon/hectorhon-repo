@@ -1,3 +1,9 @@
+;;; package --- Summary
+
+;;; Commentary:
+
+;;; Code:
+
 ;; set up melpa repository
 (require 'package)
 (let* ((no-ssl (and (memq system-type '(windows-nt ms-dos))
@@ -43,7 +49,9 @@ There are two things you can do about this warning:
  '(dired-listing-switches "-al --sort=extension")
  '(eshell-visual-subcommands (quote (("npm" "install" "run"))))
  '(fci-rule-color "#383838")
+ '(flycheck-display-errors-delay 0.1)
  '(flycheck-global-modes (quote (not emacs-lisp-mode)))
+ '(flycheck-idle-change-delay 0.1)
  '(global-auto-revert-mode t)
  '(global-display-line-numbers-mode t)
  '(global-hl-line-mode nil)
@@ -52,6 +60,7 @@ There are two things you can do about this warning:
  '(indent-tabs-mode nil)
  '(inhibit-startup-screen t)
  '(initial-scratch-message nil)
+ '(js-enabled-frameworks nil)
  '(js-indent-level 2)
  '(magit-save-repository-buffers nil)
  '(make-backup-files nil)
@@ -102,7 +111,7 @@ There are two things you can do about this warning:
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:family "DejaVu Sans Mono" :foundry "unknown" :slant normal :weight normal :height 98 :width normal)))))
+ '(default ((t (:family "DejaVu Sans Mono" :foundry "unknown" :slant normal :weight normal :height 113 :width normal)))))
 
 
 
@@ -111,18 +120,20 @@ There are two things you can do about this warning:
 
 
 
-;; format code
 (defun indent-buffer ()
+  "Format the entire buffer."
   (interactive)
   (save-excursion
     (indent-region (point-min) (point-max) nil)
     (delete-trailing-whitespace)))
 (global-set-key (kbd "C-S-F") 'indent-buffer)
+;; fix "declaration with chaining" formatting for javascript mode
+(advice-add 'js--multi-line-declaration-indentation :around (lambda (orig-fun &rest args) nil))
 
 
 
-;; copy current file name
 (defun copy-filename ()
+  "Copy the current file name."
   (interactive)
   (let ((filename (buffer-file-name (window-buffer (minibuffer-selected-window)))))
     (message filename)
@@ -138,16 +149,16 @@ There are two things you can do about this warning:
 
 
 
-;; jump to scratch buffer
 (defun switch-to-scratch-buffer ()
+  "Switch to the *scratch* buffer."
   (interactive)
   (switch-to-buffer "*scratch*"))
 (global-set-key (kbd "<f1>") 'switch-to-scratch-buffer)
 
 
 
-;; jump to shell buffer
 (defun switch-to-eshell-buffer ()
+  "Switch to the *eshell* buffer."
   (interactive)
   (switch-to-buffer "*eshell*"))
 (global-set-key (kbd "<f2>") 'switch-to-eshell-buffer)
@@ -165,6 +176,7 @@ There are two things you can do about this warning:
 
 
 ;; set up projectile
+(require 'projectile)
 (projectile-mode +1)
 (define-key projectile-mode-map (kbd "s-p") 'projectile-command-map)
 (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
@@ -178,13 +190,13 @@ There are two things you can do about this warning:
 (global-set-key (kbd "C-x b") 'helm-mini)
 (global-set-key (kbd "C-c y") 'helm-show-kill-ring)
 (global-set-key (kbd "M-s o") 'helm-occur)
-(projectile-global-mode)
 (setq projectile-completion-system 'helm)
 (helm-projectile-on)
 
 
 
 ;; set up slime
+(require 'slime)
 (setq inferior-lisp-program "/usr/local/bin/sbcl")
 (setq slime-contribs '(slime-fancy))
 
@@ -193,37 +205,49 @@ There are two things you can do about this warning:
 ;; set up web mode
 (require 'web-mode)
 (defun my-web-mode-hook ()
+  "Customize 'web-mode."
   (setq web-mode-code-indent-offset 2)
   (setq web-mode-enable-auto-quoting nil))
 (add-hook 'web-mode-hook 'my-web-mode-hook)
 (add-to-list 'auto-mode-alist '("\\.hbs\\'" . web-mode))
 (add-to-list 'auto-mode-alist '("\\.jsx\\'" . web-mode))
 (add-to-list 'web-mode-comment-formats '("jsx" . "//" ))
+(add-to-list 'web-mode-indentation-params '("lineup-args" . nil))
+(add-to-list 'web-mode-indentation-params '("lineup-calls" . nil))
+(add-to-list 'web-mode-indentation-params '("lineup-concats" . nil))
+(add-to-list 'web-mode-indentation-params '("lineup-ternary" . nil))
 
 
 
 ;; set up flycheck
+(require 'flycheck)
 (add-hook 'after-init-hook #'global-flycheck-mode)
 
 ;; flycheck use locally installed eslint
-(defvar node-modules-bin-path nil)
-(defun projectile-add-node-modules-bin-to-exec-path ()
-  (when (string-equal "npm" (projectile-project-type))
-    (setq node-modules-bin-path
-          (concat (projectile-project-root) "node_modules/.bin/"))
-    (setq exec-path
-          (cons node-modules-bin-path exec-path))))
+(defvar node-modules-bin-path nil
+  "When not nil, it means node_modules/.bin/ has been added to the 'exec-path.")
 (defun projectile-remove-node-modules-bin-from-exec-path ()
+  "To be used as a projectile hook to remove node_modules/.bin/ from the 'exec-path."
   (when node-modules-bin-path
+    (message (concat "Switch project, removing " node-modules-bin-path " from exec-path"))
     (setq exec-path (delete node-modules-bin-path exec-path))
     (setq node-modules-bin-path nil)))
 (add-hook 'projectile-before-switch-project-hook
           #'projectile-remove-node-modules-bin-from-exec-path)
-(add-hook 'projectile-after-switch-project-hook
-          #'projectile-add-node-modules-bin-to-exec-path)
-(setq projectile-switch-project-action #'projectile-dired)
-(defun reselect-flycheck-javascript-eslint ()
-  (when node-modules-bin-path
-    (flycheck-reset-enabled-checker 'javascript-eslint)
-    (flycheck-select-checker 'javascript-eslint)))
-(add-hook 'js-mode-hook #'reselect-flycheck-javascript-eslint)
+(defun use-eslint-if-available ()
+  "To be used as a 'js-mode hook to enable 'flycheck-mode 'javascript-eslint if available."
+  (when (and (not node-modules-bin-path)
+             (string-equal "npm" (projectile-project-type)))
+    (setq node-modules-bin-path (concat (projectile-project-root) "node_modules/.bin/"))
+    (message (concat "npm project, adding " node-modules-bin-path " to exec-path"))
+    (setq exec-path (cons node-modules-bin-path exec-path)))
+  (flycheck-reset-enabled-checker 'javascript-eslint)
+  (if (flycheck-may-enable-checker 'javascript-eslint)
+      (progn (message "Enabling Flycheck javascript-eslint")
+             (flycheck-select-checker 'javascript-eslint))
+    (message "Flycheck javascript-eslint not available")))
+(add-hook 'js-mode-hook #'use-eslint-if-available)
+
+(provide 'emacs)
+
+;;; .emacs ends here
