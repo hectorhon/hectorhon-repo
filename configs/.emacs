@@ -42,16 +42,15 @@ There are two things you can do about this warning:
  '(company-quickhelp-color-foreground "#DCDCCC")
  '(compilation-ask-about-save nil)
  '(create-lockfiles nil)
- '(custom-enabled-themes (quote (zenburn)))
+ '(custom-enabled-themes (quote (solarized-light)))
  '(custom-safe-themes
    (quote
-    ("a7051d761a713aaf5b893c90eaba27463c791cd75d7257d3a8e66b0c8c346e77" default)))
+    ("a8245b7cc985a0610d71f9852e9f2767ad1b852c2bdea6f4aadc12cce9c4d6d0" "0598c6a29e13e7112cfbc2f523e31927ab7dce56ebb2016b567e1eff6dc1fd4f" "d91ef4e714f05fff2070da7ca452980999f5361209e679ee988e3c432df24347" "a7051d761a713aaf5b893c90eaba27463c791cd75d7257d3a8e66b0c8c346e77" default)))
  '(dired-listing-switches "-al --sort=extension")
+ '(display-time-mode t)
  '(eshell-visual-subcommands (quote (("npm" "install" "run"))))
  '(fci-rule-color "#383838")
- '(flycheck-display-errors-delay 0.1)
  '(flycheck-global-modes (quote (not emacs-lisp-mode)))
- '(flycheck-idle-change-delay 0.1)
  '(global-auto-revert-mode t)
  '(global-display-line-numbers-mode t)
  '(global-hl-line-mode nil)
@@ -62,6 +61,8 @@ There are two things you can do about this warning:
  '(initial-scratch-message nil)
  '(js-enabled-frameworks nil)
  '(js-indent-level 2)
+ '(json-reformat:indent-width 2)
+ '(line-spacing 1)
  '(magit-save-repository-buffers nil)
  '(make-backup-files nil)
  '(mark-ring-max 1)
@@ -71,7 +72,7 @@ There are two things you can do about this warning:
     ("#CC9393" "#DFAF8F" "#F0DFAF" "#7F9F7F" "#BFEBBF" "#93E0E3" "#94BFF3" "#DC8CC3")))
  '(package-selected-packages
    (quote
-    (flycheck zenburn-theme magit helm-projectile projectile helm web-mode slime)))
+    (json-mode solarized-theme flycheck zenburn-theme magit helm-projectile projectile helm web-mode slime)))
  '(pdf-view-midnight-colors (quote ("#DCDCCC" . "#383838")))
  '(projectile-globally-ignored-directories
    (quote
@@ -111,7 +112,7 @@ There are two things you can do about this warning:
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:family "DejaVu Sans Mono" :foundry "unknown" :slant normal :weight normal :height 113 :width normal)))))
+ '(default ((t (:family "Liberation Mono" :foundry "unknown" :slant normal :weight normal :height 128 :width normal)))))
 
 
 
@@ -156,6 +157,9 @@ There are two things you can do about this warning:
 (global-set-key (kbd "<f1>") 'switch-to-scratch-buffer)
 
 
+
+;; start eshell on startup
+(add-hook 'emacs-startup-hook 'eshell)
 
 (defun switch-to-eshell-buffer ()
   "Switch to the *eshell* buffer."
@@ -209,6 +213,7 @@ There are two things you can do about this warning:
   (setq web-mode-code-indent-offset 2)
   (setq web-mode-enable-auto-quoting nil))
 (add-hook 'web-mode-hook 'my-web-mode-hook)
+(add-to-list 'auto-mode-alist '("\\.html\\'" . web-mode))
 (add-to-list 'auto-mode-alist '("\\.hbs\\'" . web-mode))
 (add-to-list 'auto-mode-alist '("\\.jsx\\'" . web-mode))
 (add-to-list 'web-mode-comment-formats '("jsx" . "//" ))
@@ -242,11 +247,14 @@ There are two things you can do about this warning:
     (message (concat "npm project, adding " node-modules-bin-path " to exec-path"))
     (setq exec-path (cons node-modules-bin-path exec-path)))
   (flycheck-reset-enabled-checker 'javascript-eslint)
-  (if (flycheck-may-enable-checker 'javascript-eslint)
+  (if (and (flycheck-may-enable-checker 'javascript-eslint)
+           ;; buffer-file-name ;; html-mode starts js mode..? problem goes away when web-mode auto-mode-alist has *.html
+           (not (member (file-name-extension buffer-file-name t) json-mode-standard-file-ext)))
       (progn (message "Enabling Flycheck javascript-eslint")
-             (flycheck-select-checker 'javascript-eslint))
-    (message "Flycheck javascript-eslint not available")))
+             (flycheck-select-checker 'javascript-eslint))))
 (add-hook 'js-mode-hook #'use-eslint-if-available)
+
+
 
 (provide 'emacs)
 
