@@ -48,8 +48,9 @@ There are two things you can do about this warning:
     ("a8245b7cc985a0610d71f9852e9f2767ad1b852c2bdea6f4aadc12cce9c4d6d0" "0598c6a29e13e7112cfbc2f523e31927ab7dce56ebb2016b567e1eff6dc1fd4f" "d91ef4e714f05fff2070da7ca452980999f5361209e679ee988e3c432df24347" "a7051d761a713aaf5b893c90eaba27463c791cd75d7257d3a8e66b0c8c346e77" default)))
  '(dired-listing-switches "-al --sort=extension")
  '(display-time-mode t)
- '(eshell-visual-subcommands (quote (("npm" "install" "run"))))
+ '(eshell-visual-subcommands (quote (("npm" "install" "run") ("npx" "jest"))))
  '(fci-rule-color "#383838")
+ '(flycheck-check-syntax-automatically (quote (save mode-enabled)))
  '(flycheck-global-modes (quote (not emacs-lisp-mode)))
  '(global-auto-revert-mode t)
  '(global-display-line-numbers-mode t)
@@ -106,7 +107,8 @@ There are two things you can do about this warning:
      (340 . "#94BFF3")
      (360 . "#DC8CC3"))))
  '(vc-annotate-very-old-color "#DC8CC3")
- '(web-mode-enable-auto-pairing nil))
+ '(web-mode-enable-auto-pairing nil)
+ '(web-mode-markup-indent-offset 2))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -167,6 +169,13 @@ There are two things you can do about this warning:
   (switch-to-buffer "*eshell*"))
 (global-set-key (kbd "<f2>") 'switch-to-eshell-buffer)
 
+(defun clear-eshell ()
+  "Clear the eshell."
+  (interactive)
+  (let ((eshell-buffer-maximum-lines 0))
+    (eshell-truncate-buffer)))
+(global-set-key (kbd "S-<f8>") 'clear-eshell)
+
 
 
 ;; Shortcut key for hs-minor-mode toggle hiding
@@ -226,7 +235,9 @@ There are two things you can do about this warning:
 
 ;; set up flycheck
 (require 'flycheck)
+(flycheck-add-mode 'javascript-eslint 'web-mode)
 (add-hook 'after-init-hook #'global-flycheck-mode)
+(global-set-key (kbd "<f5>") 'flycheck-buffer)
 
 ;; flycheck use locally installed eslint
 (defvar node-modules-bin-path nil
@@ -249,10 +260,12 @@ There are two things you can do about this warning:
   (flycheck-reset-enabled-checker 'javascript-eslint)
   (if (and (flycheck-may-enable-checker 'javascript-eslint)
            ;; buffer-file-name ;; html-mode starts js mode..? problem goes away when web-mode auto-mode-alist has *.html
-           (not (member (file-name-extension buffer-file-name t) json-mode-standard-file-ext)))
+           (not (member (file-name-extension buffer-file-name t) json-mode-standard-file-ext))
+           (not (member (file-name-base buffer-file-name) json-mode-auto-mode-list)))
       (progn (message "Enabling Flycheck javascript-eslint")
              (flycheck-select-checker 'javascript-eslint))))
 (add-hook 'js-mode-hook #'use-eslint-if-available)
+(add-hook 'web-mode-hook #'use-eslint-if-available)
 
 
 
