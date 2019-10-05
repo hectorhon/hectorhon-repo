@@ -28,14 +28,13 @@ There are two things you can do about this warning:
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(ansi-color-faces-vector
-   [default default default italic underline success warning error])
  '(auto-save-default nil)
  '(blink-cursor-mode nil)
  '(column-number-mode t)
  '(create-lockfiles nil)
- '(custom-enabled-themes (quote (tango-dark)))
+ '(custom-enabled-themes (quote (tsdh-dark)))
  '(display-time-mode t)
+ '(elpy-modules nil)
  '(global-auto-revert-mode t)
  '(global-display-line-numbers-mode t)
  '(grep-find-ignored-directories
@@ -46,9 +45,10 @@ There are two things you can do about this warning:
  '(initial-scratch-message nil)
  '(js-indent-level 2)
  '(make-backup-files nil)
+ '(menu-bar-mode nil)
  '(package-selected-packages
    (quote
-    (json-mode flycheck helm-projectile helm magit projectile web-mode)))
+    (elpy json-mode flycheck helm-projectile helm magit projectile web-mode)))
  '(ring-bell-function (quote ignore))
  '(scroll-bar-mode nil)
  '(show-paren-delay 0)
@@ -57,6 +57,7 @@ There are two things you can do about this warning:
  '(tooltip-mode nil)
  '(truncate-lines t)
  '(web-mode-code-indent-offset 2)
+ '(web-mode-enable-auto-quoting nil)
  '(web-mode-markup-indent-offset 2))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
@@ -76,7 +77,7 @@ There are two things you can do about this warning:
   (save-excursion
     (indent-region (point-min) (point-max) nil))
   (delete-trailing-whitespace))
-(global-set-key "" (quote format-buffer))
+(global-set-key (kbd "C-c f") (quote format-buffer))
 
 
 
@@ -114,6 +115,7 @@ There are two things you can do about this warning:
 (add-to-list 'auto-mode-alist '("\\.hbs\\'" . web-mode))
 (add-to-list 'auto-mode-alist '("\\.html\\'" . web-mode))
 (add-to-list 'auto-mode-alist '("\\.jsx\\'" . web-mode))
+(add-to-list 'auto-mode-alist '("\\.djhtml\\'" . web-mode))
 
 
 
@@ -134,6 +136,22 @@ There are two things you can do about this warning:
 (add-hook 'js-mode-hook 'update-node-modules-path)
 (add-hook 'web-mode-hook 'update-node-modules-path)
 (advice-add 'js--multi-line-declaration-indentation :around (lambda (orig-fun &rest args) nil))
+
+
+
+(require 'elpy)
+(elpy-enable)
+(define-key elpy-mode-map (kbd "<M-up>") nil)
+(define-key elpy-mode-map (kbd "<M-down>") nil)
+;; https://elpy.readthedocs.io/en/latest/customization_tips.html
+;; Use flycheck instead of flymake
+(when (load "flycheck" t t)
+  (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
+  (add-hook 'elpy-mode-hook 'flycheck-mode))
+(add-hook 'pyvenv-post-activate-hooks
+          (lambda ()
+            (flycheck-reset-enabled-checker 'python-flake8)
+            (flycheck-buffer)))
 
 
 
