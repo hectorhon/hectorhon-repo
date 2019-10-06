@@ -59,18 +59,28 @@ There are two things you can do about this warning:
  '(web-mode-code-indent-offset 2)
  '(web-mode-enable-auto-quoting nil)
  '(web-mode-markup-indent-offset 2))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(default ((t (:family "DejaVu Sans Mono" :foundry "PfEd" :slant normal :weight normal :height 113 :width normal)))))
+(cond
+ ((string-equal system-type "windows-nt")
+  (custom-set-faces
+   ;; custom-set-faces was added by Custom.
+   ;; If you edit it by hand, you could mess it up, so be careful.
+   ;; Your init file should contain only one such instance.
+   ;; If there is more than one, they won't work right.
+   '(default ((t (:family "Lucida Console" :foundry "outline" :slant normal :weight normal :height 98 :width normal))))))
+ ((string-equal system-type "gnu/linux")
+  (custom-set-faces
+   ;; custom-set-faces was added by Custom.
+   ;; If you edit it by hand, you could mess it up, so be careful.
+   ;; Your init file should contain only one such instance.
+   ;; If there is more than one, they won't work right.
+   '(default ((t (:family "DejaVu Sans Mono" :foundry "PfEd" :slant normal :weight normal :height 113 :width normal)))))))
 
 
 
 (windmove-default-keybindings)
 (global-set-key [M-down] (quote scroll-up-line))
 (global-set-key [M-up] (quote scroll-down-line))
+
 (defun format-buffer ()
   "Indent the entire buffer and deletes all trailing whitespace."
   (interactive)
@@ -78,6 +88,15 @@ There are two things you can do about this warning:
     (indent-region (point-min) (point-max) nil))
   (delete-trailing-whitespace))
 (global-set-key (kbd "C-c f") (quote format-buffer))
+
+(defun copy-current-file-name ()
+  "Copy the current buffer file name."
+  (interactive)
+  (let ((filename (buffer-file-name)))
+    (message filename)
+    (kill-new filename)))
+(global-set-key (kbd "C-c z") 'copy-current-file-name)
+
 
 
 
