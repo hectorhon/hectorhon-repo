@@ -142,7 +142,14 @@ There are two things you can do about this warning:
 
 (require 'flycheck)
 (add-hook 'after-init-hook #'global-flycheck-mode)
+
+;; Customize flycheck checkers for web-mode
 (flycheck-add-mode 'javascript-eslint 'web-mode)
+(defun customize-flycheck-checkers-for-web-mode ()
+  "Customize flycheck checkers for web-mode."
+  (when (string-equal "django" web-mode-engine)
+    (push 'javascript-eslint flycheck-disabled-checkers)))
+(add-hook 'web-mode-hook 'customize-flycheck-checkers-for-web-mode)
 
 (defvar node-modules-path nil)
 (defun update-node-modules-path ()
