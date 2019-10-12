@@ -32,14 +32,14 @@ There are two things you can do about this warning:
  '(blink-cursor-mode nil)
  '(column-number-mode t)
  '(create-lockfiles nil)
- '(custom-enabled-themes (quote (tsdh-dark)))
+ '(custom-enabled-themes (quote (leuven)))
  '(display-time-mode t)
  '(elpy-modules nil)
  '(global-auto-revert-mode t)
  '(global-display-line-numbers-mode t)
  '(grep-find-ignored-directories
    (quote
-    ("SCCS" "RCS" "CVS" "MCVS" ".src" ".svn" ".git" ".hg" ".bzr" "_MTN" "_darcs" "{arch}" "node_modules")))
+    ("SCCS" "RCS" "CVS" "MCVS" ".src" ".svn" ".git" ".hg" ".bzr" "_MTN" "_darcs" "{arch}" "node_modules" "dist")))
  '(indent-tabs-mode nil)
  '(inhibit-startup-screen t)
  '(initial-scratch-message nil)
@@ -50,6 +50,7 @@ There are two things you can do about this warning:
    (quote
     (elpy json-mode flycheck helm-projectile helm magit projectile web-mode)))
  '(ring-bell-function (quote ignore))
+ '(safe-local-variable-values (quote ((engine . jsx) (engine . django))))
  '(scroll-bar-mode nil)
  '(show-paren-delay 0)
  '(show-paren-mode t)
@@ -58,6 +59,7 @@ There are two things you can do about this warning:
  '(truncate-lines t)
  '(web-mode-code-indent-offset 2)
  '(web-mode-enable-auto-quoting nil)
+ '(web-mode-enable-engine-detection t)
  '(web-mode-markup-indent-offset 2))
 (cond
  ((string-equal system-type "windows-nt")
@@ -80,7 +82,6 @@ There are two things you can do about this warning:
 (windmove-default-keybindings)
 (global-set-key [M-down] (quote scroll-up-line))
 (global-set-key [M-up] (quote scroll-down-line))
-
 (defun format-buffer ()
   "Indent the entire buffer and deletes all trailing whitespace."
   (interactive)
@@ -88,15 +89,16 @@ There are two things you can do about this warning:
     (indent-region (point-min) (point-max) nil))
   (delete-trailing-whitespace))
 (global-set-key (kbd "C-c f") (quote format-buffer))
-
-(defun copy-current-file-name ()
-  "Copy the current buffer file name."
+(defun copy-buffer-file-name ()
+  "Copy the current 'buffer-file-name to the clipboard."
   (interactive)
-  (let ((filename (buffer-file-name)))
-    (message filename)
-    (kill-new filename)))
-(global-set-key (kbd "C-c z") 'copy-current-file-name)
-
+  (let ((filename (if (equal major-mode 'dired-mode)
+                      default-directory
+                    (buffer-file-name))))
+    (when filename
+      (kill-new filename)
+      (message filename))))
+(global-set-key (kbd "C-c z") (quote copy-buffer-file-name))
 
 
 
@@ -164,9 +166,8 @@ There are two things you can do about this warning:
 (define-key elpy-mode-map (kbd "<M-down>") nil)
 ;; https://elpy.readthedocs.io/en/latest/customization_tips.html
 ;; Use flycheck instead of flymake
-(when (load "flycheck" t t)
-  (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
-  (add-hook 'elpy-mode-hook 'flycheck-mode))
+(setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
+(add-hook 'elpy-mode-hook 'flycheck-mode)
 (add-hook 'pyvenv-post-activate-hooks
           (lambda ()
             (flycheck-reset-enabled-checker 'python-flake8)
