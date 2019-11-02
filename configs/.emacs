@@ -44,6 +44,7 @@ There are two things you can do about this warning:
  '(inhibit-startup-screen t)
  '(initial-scratch-message nil)
  '(js-indent-level 2)
+ '(js-switch-indent-offset 2)
  '(make-backup-files nil)
  '(menu-bar-mode nil)
  '(package-selected-packages
@@ -63,12 +64,16 @@ There are two things you can do about this warning:
  '(web-mode-markup-indent-offset 2))
 (cond
  ((string-equal system-type "windows-nt")
+  (customize-set-variable 'ediff-diff-program "C:\\Program Files\\Git\\usr\\bin\\diff.exe")
+  (customize-set-variable 'projectile-use-git-grep t)))
+(cond
+ ((string-equal system-type "windows-nt")
   (custom-set-faces
    ;; custom-set-faces was added by Custom.
    ;; If you edit it by hand, you could mess it up, so be careful.
    ;; Your init file should contain only one such instance.
    ;; If there is more than one, they won't work right.
-   '(default ((t (:family "Lucida Console" :foundry "outline" :slant normal :weight normal :height 98 :width normal))))))
+   '(default ((t (:family "Consolas" :foundry "outline" :slant normal :weight normal :height 120 :width normal))))))
  ((string-equal system-type "gnu/linux")
   (custom-set-faces
    ;; custom-set-faces was added by Custom.
