@@ -59,6 +59,13 @@ There are two things you can do about this warning:
  '(tooltip-mode nil)
  '(truncate-lines t)
  '(web-mode-code-indent-offset 2)
+ '(web-mode-comment-formats
+   (quote
+    (("java" . "/*")
+     ("javascript" . "//")
+     ("php" . "/*")
+     ("css" . "/*")
+     ("jsx" . "//"))))
  '(web-mode-enable-auto-quoting nil)
  '(web-mode-enable-engine-detection t)
  '(web-mode-markup-indent-offset 2))
