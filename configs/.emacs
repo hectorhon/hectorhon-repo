@@ -31,6 +31,7 @@ There are two things you can do about this warning:
  '(auto-save-default nil)
  '(blink-cursor-mode nil)
  '(column-number-mode t)
+ '(compilation-ask-about-save nil)
  '(create-lockfiles nil)
  '(custom-enabled-themes (quote (leuven)))
  '(display-time-mode t)
@@ -53,12 +54,13 @@ There are two things you can do about this warning:
  '(menu-bar-mode nil)
  '(package-selected-packages
    (quote
-    (elpy json-mode flycheck helm-projectile helm magit projectile web-mode)))
+    (slime elpy json-mode flycheck helm-projectile helm magit projectile web-mode)))
  '(ring-bell-function (quote ignore))
  '(safe-local-variable-values (quote ((engine . jsx) (engine . django))))
  '(scroll-bar-mode nil)
  '(show-paren-delay 0)
  '(show-paren-mode t)
+ '(slime-load-failed-fasl (quote never))
  '(tool-bar-mode nil)
  '(tooltip-mode nil)
  '(truncate-lines t)
@@ -92,6 +94,14 @@ There are two things you can do about this warning:
    ;; Your init file should contain only one such instance.
    ;; If there is more than one, they won't work right.
    '(default ((t (:family "DejaVu Sans Mono" :foundry "PfEd" :slant normal :weight normal :height 113 :width normal)))))))
+
+
+
+;; https://github.com/slime/slime/blob/master/README.md
+;; Set your lisp system and, optionally, some contribs
+(require 'slime)
+(setq inferior-lisp-program "/usr/local/bin/sbcl")
+(setq slime-contribs '(slime-fancy slime-asdf))
 
 
 
