@@ -32,6 +32,14 @@ There are two things you can do about this warning:
  '(blink-cursor-mode nil)
  '(column-number-mode t)
  '(compilation-ask-about-save nil)
+ '(compilation-error-regexp-alist
+   (quote
+    (absoft ada aix ant bash borland python-tracebacks-and-caml cmake cmake-info comma cucumber msft edg-1 edg-2 epc ftnchek iar ibm irix
+            ("^\\(?:[ 	]+at \\|==[0-9]+== +\\(?:at\\|b\\(y\\)\\)\\).+(\\([^()]+\\):\\([0-9]+\\):\\([0-9]+\\))$" 2 3 4 (1))
+            java jikes-file maven jikes-line clang-include gcc-include ruby-Test::Unit gnu lcc makepp mips-1 mips-2 msft omake oracle perl
+            php rxp sparc-pascal-file sparc-pascal-line sparc-pascal-example sun sun-ada watcom 4bsd gcov-file gcov-header gcov-nomark
+            gcov-called-line gcov-never-called perl--Pod::Checker perl--Test perl--Test2 perl--Test::Harness weblint guile-file guile-line
+            )))
  '(create-lockfiles nil)
  '(custom-enabled-themes (quote (leuven)))
  '(display-time-mode t)
@@ -125,6 +133,7 @@ There are two things you can do about this warning:
       (kill-new filename)
       (message filename))))
 (global-set-key (kbd "C-c z") (quote copy-buffer-file-name))
+(global-set-key (kbd "<f5>") 'recompile)
 
 
 
