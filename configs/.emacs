@@ -23,6 +23,23 @@ There are two things you can do about this warning:
 
 
 
+(setq hi-lock-face-defaults
+      (list "hi-black-hb"
+            "hi-yellow"
+            "hi-pink"
+            "hi-green"
+            "hi-blue"
+            "hi-black-b"
+            "hi-blue-b"
+            "hi-red-b"
+            "hi-green-b"))
+
+
+
+(global-undo-tree-mode)
+
+
+
 (require 'slime)
 (setq inferior-lisp-program "sbcl")
 
@@ -165,9 +182,10 @@ Position the cursor at it's beginning, according to the current mode."
  '(custom-safe-themes
    (quote
     ("c433c87bd4b64b8ba9890e8ed64597ea0f8eb0396f4c9a9e01bd20a04d15d358" default)))
+ '(dired-listing-switches "-alX")
  '(eglot-ignored-server-capabilites
    (quote
-    (:hoverProvider :documentHighlightProvider :signatureHelpProvider)))
+    (:hoverProvider :documentHighlightProvider :signatureHelpProvider :codeActionProvider)))
  '(global-auto-revert-mode t)
  '(indent-tabs-mode nil)
  '(inhibit-startup-screen t)
@@ -208,13 +226,15 @@ Position the cursor at it's beginning, according to the current mode."
  '(menu-bar-mode nil)
  '(package-selected-packages
    (quote
-    (rjsx-mode eglot flymake counsel smex pyvenv slime web-mode magit solarized-theme zenburn-theme projectile)))
+    (undo-tree rjsx-mode eglot flymake counsel smex pyvenv slime web-mode magit solarized-theme zenburn-theme projectile)))
  '(projectile-globally-ignored-directories
    (quote
-    (".idea" ".ensime_cache" ".eunit" ".git" ".hg" ".fslckout" "_FOSSIL_" ".bzr" "_darcs" ".tox" ".svn" ".stack-work" "*node_modules" "*site-packages")))
+    (".idea" ".ensime_cache" ".eunit" ".git" ".hg" ".fslckout" "_FOSSIL_" ".bzr" "_darcs" ".tox" ".svn" ".stack-work" "*node_modules" "*site-packages" "*dist" "*vendor")))
+ '(projectile-indexing-method (quote hybrid))
  '(projectile-project-root-files-bottom-up
    (quote
     ("pyvenv.cfg" "package.json" ".projectile" ".git" ".hg" ".fslckout" "_FOSSIL_" ".bzr" "_darcs")))
+ '(projectile-sort-order (quote recently-active))
  '(python-indent-offset 2)
  '(python-shell-interpreter "python3")
  '(ring-bell-function (quote ignore))
@@ -237,6 +257,7 @@ Position the cursor at it's beginning, according to the current mode."
  '(font-lock-keyword-face ((t (:weight normal))))
  '(js2-error ((t (:underline (:style wave :color "yellow green")))))
  '(show-paren-match ((((class color) (min-colors 89)) (:foreground "#d33682" :background "green" :weight normal))))
+ '(swiper-match-face-2 ((t (:background "#b58900" :foreground "#fdf6e3" :weight normal))))
  '(web-mode-html-attr-value-face ((t (:slant normal)))))
 
 (provide '.emacs)
