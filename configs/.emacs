@@ -178,7 +178,6 @@ Position the cursor at it's beginning, according to the current mode."
  '(blink-cursor-mode nil)
  '(column-number-mode t)
  '(create-lockfiles nil)
- '(custom-enabled-themes (quote (solarized-light)))
  '(custom-safe-themes
    (quote
     ("c433c87bd4b64b8ba9890e8ed64597ea0f8eb0396f4c9a9e01bd20a04d15d358" default)))
@@ -252,13 +251,8 @@ Position the cursor at it's beginning, according to the current mode."
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(font-lock-builtin-face ((t (:weight normal))))
- '(font-lock-constant-face ((t (:weight normal))))
- '(font-lock-keyword-face ((t (:weight normal))))
- '(js2-error ((t (:underline (:style wave :color "yellow green")))))
- '(show-paren-match ((((class color) (min-colors 89)) (:foreground "#d33682" :background "green" :weight normal))))
- '(swiper-match-face-2 ((t (:background "#b58900" :foreground "#fdf6e3" :weight normal))))
- '(web-mode-html-attr-value-face ((t (:slant normal)))))
+ '(default ((t (:family "DejaVu Sans Mono" :foundry "PfEd" :slant normal :weight normal :height 105 :width normal))))
+ '(region ((t (:background "moccasin")))))
 
 (provide '.emacs)
 
