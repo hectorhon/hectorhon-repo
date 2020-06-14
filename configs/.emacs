@@ -23,19 +23,6 @@ There are two things you can do about this warning:
 
 
 
-(setq hi-lock-face-defaults
-      (list "hi-black-hb"
-            "hi-yellow"
-            "hi-pink"
-            "hi-green"
-            "hi-blue"
-            "hi-black-b"
-            "hi-blue-b"
-            "hi-red-b"
-            "hi-green-b"))
-
-
-
 (global-undo-tree-mode)
 
 
@@ -68,19 +55,42 @@ There are two things you can do about this warning:
       (message filename))))
 (global-set-key (kbd "C-c z") (quote copy-buffer-file-name))
 
-(defun smart-open-line-above ()
-  "Insert an empty line above the current line.
-Position the cursor at it's beginning, according to the current mode."
-  (interactive)
-  (move-beginning-of-line nil)
-  (newline-and-indent)
-  (forward-line -1)
-  (indent-according-to-mode))
-(global-set-key (kbd "M-o") 'smart-open-line-above)
-
 (global-set-key "\C-cy" '(lambda ()
                            (interactive)
                            (popup-menu 'yank-menu)))
+
+(defun switch-to-shell-buffer ()
+  "Switch to the *shell* buffer."
+  (interactive)
+  (switch-to-buffer "*shell*"))
+(global-set-key (kbd "<f2>") 'switch-to-shell-buffer)
+
+
+
+(defvar newline-and-indent t
+  "Modify the behavior of the open-*-line functions to cause them to autoindent.")
+
+(defun open-next-line (arg)
+  "Move to the next line and then opens a line.
+    See also `newline-and-indent'."
+  (interactive "p")
+  (end-of-line)
+  (open-line arg)
+  (next-line 1)
+  (when newline-and-indent
+    (indent-according-to-mode)))
+
+(defun open-previous-line (arg)
+  "Open a new line before the current one.
+     See also `newline-and-indent'."
+  (interactive "p")
+  (beginning-of-line)
+  (open-line arg)
+  (when newline-and-indent
+    (indent-according-to-mode)))
+
+(global-set-key (kbd "C-o") 'open-next-line)
+(global-set-key (kbd "M-o") 'open-previous-line)
 
 
 
@@ -98,8 +108,7 @@ Position the cursor at it's beginning, according to the current mode."
 (counsel-mode 1)
 (global-set-key (kbd "M-x") 'counsel-M-x)
 (global-set-key (kbd "C-x b") 'counsel-switch-buffer)
-(global-set-key (kbd "M-s o") 'swiper)
-(global-set-key (kbd "M-s O") 'occur)
+(global-set-key (kbd "M-s O") 'swiper)
 
 
 
@@ -158,7 +167,8 @@ Position the cursor at it's beginning, according to the current mode."
 (add-to-list 'eglot-server-programs '(js-mode . ("typescript-language-server" "--stdio")))
 
 (require 'js)
-(define-key js-mode-map (kbd "M-.") 'eglot-find-typeDefinition)
+(define-key js-mode-map (kbd "M-.") 'xref-find-definitions)
+;; (define-key js-mode-map (kbd "M-.") 'eglot-find-typeDefinition)
 (add-hook 'js-mode-hook 'eglot-ensure)
 
 (require 'rjsx-mode)
@@ -166,6 +176,13 @@ Position the cursor at it's beginning, according to the current mode."
 ;;   (define-key rjsx-mode-map "<" nil)
 ;;   (define-key rjsx-mode-map (kbd "C-d") nil)
 ;;   (define-key rjsx-mode-map ">" nil))
+
+
+
+(defun node-repl ()
+  (interactive)
+  (setenv "NODE_NO_READLINE" "1") ;avoid fancy terminal codes
+  (pop-to-buffer (make-comint "node-repl" "node" nil "--interactive")))
 
 
 
@@ -225,7 +242,7 @@ Position the cursor at it's beginning, according to the current mode."
  '(menu-bar-mode nil)
  '(package-selected-packages
    (quote
-    (undo-tree rjsx-mode eglot flymake counsel smex pyvenv slime web-mode magit solarized-theme zenburn-theme projectile)))
+    (wgrep undo-tree rjsx-mode eglot flymake counsel smex pyvenv slime web-mode magit solarized-theme zenburn-theme projectile)))
  '(projectile-globally-ignored-directories
    (quote
     (".idea" ".ensime_cache" ".eunit" ".git" ".hg" ".fslckout" "_FOSSIL_" ".bzr" "_darcs" ".tox" ".svn" ".stack-work" "*node_modules" "*site-packages" "*dist" "*vendor")))
