@@ -111,7 +111,7 @@
 (add-hook 'web-mode-hook 'update-node-modules-path)
 (add-hook 'typescript-mode-hook 'update-node-modules-path)
 
-(global-set-key (kbd "<f5>") 'compile)
+(global-set-key (kbd "<f5>") 'recompile)
 (require 'ansi-color)
 (add-hook 'compilation-filter-hook
           (lambda()
@@ -124,7 +124,11 @@
 (setq lsp-keymap-prefix "C-`")
 (require 'lsp-mode)
 ;; (add-hook 'rjsx-mode-hook #'lsp-deferred)
-(add-hook 'js-mode-hook #'lsp-deferred)
+(add-hook 'js-mode-hook
+          (lambda ()
+            (unless (and (stringp buffer-file-name)
+                         (string-match "\\.json\\'" buffer-file-name))
+              (lsp-deferred))))
 (add-hook 'typescript-mode-hook #'lsp-deferred)
 (add-hook 'web-mode-hook #'lsp-deferred)
 (define-key js-mode-map (kbd "M-.") 'lsp-find-type-definition)
@@ -184,4 +188,5 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(default ((t (:family "DejaVu Sans Mono" :foundry "PfEd" :slant normal :weight normal :height 105 :width normal))))
+ '(lazy-highlight ((t (:background "yellow"))))
  '(region ((t (:background "moccasin")))))
