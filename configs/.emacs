@@ -8,6 +8,56 @@
 (global-set-key [M-down] (quote scroll-up-line))
 (global-set-key [M-up] (quote scroll-down-line))
 
+;; Make windmove work in Org mode:
+(add-hook 'org-shiftup-final-hook 'windmove-up)
+(add-hook 'org-shiftleft-final-hook 'windmove-left)
+(add-hook 'org-shiftdown-final-hook 'windmove-down)
+(add-hook 'org-shiftright-final-hook 'windmove-right)
+
+;; Keep my scroll-up/down-line
+(with-eval-after-load 'org
+  (define-key org-mode-map [M-down] (quote scroll-up-line))
+  (define-key org-mode-map [M-up] (quote scroll-down-line)))
+
+
+
+;;; https://stackoverflow.com/questions/3393834/how-to-move-forward-and-backward-in-emacs-mark-ring
+
+;; (defun marker-is-point-p (marker)
+;;   "test if marker is current point"
+;;   (and (eq (marker-buffer marker) (current-buffer))
+;;        (= (marker-position marker) (point))))
+
+;; (defun push-mark-maybe ()
+;;   "push mark onto `global-mark-ring' if mark head or tail is not current location"
+;;   (if (not global-mark-ring) (error "global-mark-ring empty")
+;;     (unless (or (marker-is-point-p (car global-mark-ring))
+;;                 (marker-is-point-p (car (reverse global-mark-ring))))
+;;       (push-mark))))
+
+;; (defun backward-global-mark ()
+;;   "use `pop-global-mark', pushing current point if not on ring."
+;;   (interactive)
+;;   (push-mark-maybe)
+;;   (when (marker-is-point-p (car global-mark-ring))
+;;     (call-interactively 'pop-global-mark))
+;;   (call-interactively 'pop-global-mark))
+
+;; (defun forward-global-mark ()
+;;   "hack `pop-global-mark' to go in reverse, pushing current point if not on ring."
+;;   (interactive)
+;;   (push-mark-maybe)
+;;   (setq global-mark-ring (nreverse global-mark-ring))
+;;   (when (marker-is-point-p (car global-mark-ring))
+;;     (call-interactively 'pop-global-mark))
+;;   (call-interactively 'pop-global-mark)
+;;   (setq global-mark-ring (nreverse global-mark-ring)))
+
+;; (global-set-key [M-left] (quote backward-global-mark))
+;; (global-set-key [M-right] (quote forward-global-mark))
+
+
+
 (defun format-buffer ()
   "Indent the entire buffer and deletes all trailing whitespace."
   (interactive)
@@ -149,6 +199,7 @@
  '(column-number-mode t)
  '(compilation-ask-about-save nil)
  '(create-lockfiles nil)
+ '(dired-listing-switches "-alX")
  '(global-auto-revert-mode t)
  '(grep-find-ignored-directories
    '("SCCS" "RCS" "CVS" "MCVS" ".src" ".svn" ".git" ".hg" ".bzr" "_MTN" "_darcs" "{arch}" "node_modules" "coverage" ".log" "build"))
@@ -166,6 +217,11 @@
  '(js2-strict-missing-semi-warning nil)
  '(make-backup-files nil)
  '(menu-bar-mode nil)
+ '(org-capture-templates
+   '(("t" "TODO" entry
+      (file+headline "todo.org" "Tasks")
+      "** TODO %?
+   %u")))
  '(package-selected-packages
    '(web-mode smex typescript-mode counsel undo-tree magit projectile lsp-mode))
  '(projectile-indexing-method 'hybrid)
@@ -179,7 +235,15 @@
  '(tooltip-mode nil)
  '(truncate-lines t)
  '(typescript-indent-level 2)
+ '(vc-follow-symlinks t)
  '(web-mode-code-indent-offset 2)
+ '(web-mode-comment-formats
+   '(("jsx" . "//")
+     ("java" . "/*")
+     ("javascript" . "/*")
+     ("typescript" . "//")
+     ("php" . "/*")
+     ("css" . "/*")))
  '(web-mode-enable-auto-quoting nil)
  '(web-mode-markup-indent-offset 2))
 (custom-set-faces
