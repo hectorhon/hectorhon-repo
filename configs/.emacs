@@ -1,60 +1,9 @@
-(require 'package)
-(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
-(package-initialize)
-
-
-
 (windmove-default-keybindings)
+
+
+
 (global-set-key [M-down] (quote scroll-up-line))
 (global-set-key [M-up] (quote scroll-down-line))
-
-;; Make windmove work in Org mode:
-(add-hook 'org-shiftup-final-hook 'windmove-up)
-(add-hook 'org-shiftleft-final-hook 'windmove-left)
-(add-hook 'org-shiftdown-final-hook 'windmove-down)
-(add-hook 'org-shiftright-final-hook 'windmove-right)
-
-;; Keep my scroll-up/down-line
-(with-eval-after-load 'org
-  (define-key org-mode-map [M-down] (quote scroll-up-line))
-  (define-key org-mode-map [M-up] (quote scroll-down-line)))
-
-
-
-;;; https://stackoverflow.com/questions/3393834/how-to-move-forward-and-backward-in-emacs-mark-ring
-
-;; (defun marker-is-point-p (marker)
-;;   "test if marker is current point"
-;;   (and (eq (marker-buffer marker) (current-buffer))
-;;        (= (marker-position marker) (point))))
-
-;; (defun push-mark-maybe ()
-;;   "push mark onto `global-mark-ring' if mark head or tail is not current location"
-;;   (if (not global-mark-ring) (error "global-mark-ring empty")
-;;     (unless (or (marker-is-point-p (car global-mark-ring))
-;;                 (marker-is-point-p (car (reverse global-mark-ring))))
-;;       (push-mark))))
-
-;; (defun backward-global-mark ()
-;;   "use `pop-global-mark', pushing current point if not on ring."
-;;   (interactive)
-;;   (push-mark-maybe)
-;;   (when (marker-is-point-p (car global-mark-ring))
-;;     (call-interactively 'pop-global-mark))
-;;   (call-interactively 'pop-global-mark))
-
-;; (defun forward-global-mark ()
-;;   "hack `pop-global-mark' to go in reverse, pushing current point if not on ring."
-;;   (interactive)
-;;   (push-mark-maybe)
-;;   (setq global-mark-ring (nreverse global-mark-ring))
-;;   (when (marker-is-point-p (car global-mark-ring))
-;;     (call-interactively 'pop-global-mark))
-;;   (call-interactively 'pop-global-mark)
-;;   (setq global-mark-ring (nreverse global-mark-ring)))
-
-;; (global-set-key [M-left] (quote backward-global-mark))
-;; (global-set-key [M-right] (quote forward-global-mark))
 
 
 
@@ -65,6 +14,8 @@
     (indent-region (point-min) (point-max) nil))
   (delete-trailing-whitespace))
 (global-set-key (kbd "C-c f") (quote format-buffer))
+
+
 
 (defun copy-buffer-file-name ()
   "Copy the current 'buffer-file-name to the clipboard."
@@ -77,9 +28,14 @@
       (message filename))))
 (global-set-key (kbd "C-c z") (quote copy-buffer-file-name))
 
-(global-set-key "\C-cy" '(lambda ()
-                           (interactive)
-                           (popup-menu 'yank-menu)))
+
+
+(defun show-popup-yank-menu ()
+  (interactive)
+  (popup-menu 'yank-menu))
+(global-set-key (kbd "C-c y") (quote show-popup-yank-menu))
+
+
 
 (defvar newline-and-indent t
   "Modify the behavior of the open-*-line functions to cause them to autoindent.")
@@ -112,39 +68,32 @@
 
 
 
-(require 'magit)
 (global-set-key (kbd "C-x g") 'magit-status)
 
 
 
-(require 'js)
 (advice-add 'js--multi-line-declaration-indentation :around (lambda (orig-fun &rest args) nil))
-;; (add-to-list 'auto-mode-alist '(".*\\.tsx\\'" . typescript-mode))
 
 
 
-(require 'web-mode)
+(with-eval-after-load 'web-mode
+  (add-to-list 'web-mode-indentation-params '("lineup-calls" . nil)))
+
 (add-to-list 'auto-mode-alist '("\\.tsx\\'" . web-mode))
-(add-to-list 'web-mode-indentation-params '("lineup-calls" . nil))
 
 
 
-;; (require 'rjsx-mode)
-;; (add-to-list 'auto-mode-alist '(".*\\.js\\'" . rjsx-mode))
-;; (add-to-list 'auto-mode-alist '(".*\\.tsx\\'" . rjsx-mode))
-
-
-
-(require 'ivy)
 (ivy-mode 1)
 (global-set-key (kbd "M-x") 'counsel-M-x)
 
 
 
-(require 'projectile)
-(setq projectile-completion-system 'ivy)
-(define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
 (projectile-mode +1)
+(with-eval-after-load 'projectile
+  (setq projectile-completion-system 'ivy)
+  (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map))
+
+
 
 (defvar node-modules-path nil)
 (defun update-node-modules-path ()
@@ -161,19 +110,22 @@
 (add-hook 'web-mode-hook 'update-node-modules-path)
 (add-hook 'typescript-mode-hook 'update-node-modules-path)
 
+
+
 (global-set-key (kbd "<f5>") 'recompile)
-(require 'ansi-color)
 (add-hook 'compilation-filter-hook
-          (lambda()
+          (lambda ()
             (ansi-color-apply-on-region compilation-filter-start (point))))
 (add-hook 'typescript-mode-hook
           (lambda ()
             (when (string-equal "npm" (projectile-project-type))
               (set (make-local-variable 'compile-command) "npm run build "))))
 
+
+
 (setq lsp-keymap-prefix "C-`")
-(require 'lsp-mode)
-;; (add-hook 'rjsx-mode-hook #'lsp-deferred)
+(global-set-key (kbd "M-n") 'flymake-goto-next-error)
+(global-set-key (kbd "M-p") 'flymake-goto-prev-error)
 (add-hook 'js-mode-hook
           (lambda ()
             (unless (and (stringp buffer-file-name)
@@ -181,11 +133,68 @@
               (lsp-deferred))))
 (add-hook 'typescript-mode-hook #'lsp-deferred)
 (add-hook 'web-mode-hook #'lsp-deferred)
-(define-key js-mode-map (kbd "M-.") 'lsp-find-type-definition)
-(define-key js-mode-map (kbd "M-?") 'lsp-find-references)
-(global-set-key (kbd "M-n") 'flymake-goto-next-error)
-(global-set-key (kbd "M-p") 'flymake-goto-prev-error)
-(define-key lsp-mode-map (kbd "C-S-SPC") 'completion-at-point)
+
+
+
+(defun open-tasks-file ()
+  "Open my tasks file."
+  (interactive)
+  (require 'org)
+  (let ((my-todo-file
+         (concat (file-name-as-directory org-directory)
+                 "todo.org")))
+    (find-file my-todo-file)))
+(global-set-key (kbd "<f12>") (quote open-tasks-file))
+
+(with-eval-after-load 'org
+  ;; Make windmove work in Org mode:
+  (add-hook 'org-shiftup-final-hook 'windmove-up)
+  (add-hook 'org-shiftleft-final-hook 'windmove-left)
+  (add-hook 'org-shiftdown-final-hook 'windmove-down)
+  (add-hook 'org-shiftright-final-hook 'windmove-right)
+
+  ;; Keep my scroll-up/down-line
+  (define-key org-mode-map [M-down] (quote scroll-up-line))
+  (define-key org-mode-map [M-up] (quote scroll-down-line)))
+
+
+
+;; https://stackoverflow.com/questions/3393834/how-to-move-forward-and-backward-in-emacs-mark-ring
+
+(defun marker-is-point-p (marker)
+  "test if marker is current point"
+  (and (eq (marker-buffer marker) (current-buffer))
+       (= (marker-position marker) (point))))
+
+(defun push-mark-maybe ()
+  "push mark onto `global-mark-ring' if mark head or tail is not current location"
+  (if (not global-mark-ring) (error "global-mark-ring empty")
+    (unless (or (marker-is-point-p (car global-mark-ring))
+                (marker-is-point-p (car (reverse global-mark-ring))))
+      (push-mark))))
+
+(defun backward-global-mark ()
+  "use `pop-global-mark', pushing current point if not on ring."
+  (interactive)
+  (push-mark-maybe)
+  (when (marker-is-point-p (car global-mark-ring))
+    (call-interactively 'pop-global-mark))
+  (call-interactively 'pop-global-mark))
+
+(defun forward-global-mark ()
+  "hack `pop-global-mark' to go in reverse, pushing current point if not on ring."
+  (interactive)
+  (push-mark-maybe)
+  (setq global-mark-ring (nreverse global-mark-ring))
+  (when (marker-is-point-p (car global-mark-ring))
+    (call-interactively 'pop-global-mark))
+  (call-interactively 'pop-global-mark)
+  (setq global-mark-ring (nreverse global-mark-ring)))
+
+(global-set-key [M-left] (quote backward-global-mark))
+(global-set-key [M-right] (quote forward-global-mark))
+
+
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -201,6 +210,7 @@
  '(create-lockfiles nil)
  '(dired-listing-switches "-alX")
  '(global-auto-revert-mode t)
+ '(global-display-line-numbers-mode t)
  '(grep-find-ignored-directories
    '("SCCS" "RCS" "CVS" "MCVS" ".src" ".svn" ".git" ".hg" ".bzr" "_MTN" "_darcs" "{arch}" "node_modules" "coverage" ".log" "build"))
  '(grep-find-ignored-files
@@ -215,6 +225,7 @@
  '(js-indent-level 2)
  '(js-switch-indent-offset 2)
  '(js2-strict-missing-semi-warning nil)
+ '(magit-auto-revert-mode nil)
  '(make-backup-files nil)
  '(menu-bar-mode nil)
  '(org-capture-templates
@@ -222,6 +233,9 @@
       (file+headline "todo.org" "Tasks")
       "** TODO %?
    %u")))
+ '(package-archives
+   '(("gnu" . "https://elpa.gnu.org/packages/")
+     ("melpa" . "https://melpa.org/packages/")))
  '(package-selected-packages
    '(web-mode smex typescript-mode counsel undo-tree magit projectile lsp-mode))
  '(projectile-indexing-method 'hybrid)
