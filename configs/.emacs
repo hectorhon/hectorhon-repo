@@ -17,6 +17,12 @@
 
 
 
+(defadvice yank (after indent-region activate)
+  (if (member major-mode '(typescript-mode))
+      (indent-region (region-beginning) (region-end) nil)))
+
+
+
 (defun copy-buffer-file-name ()
   "Copy the current 'buffer-file-name to the clipboard."
   (interactive)
@@ -131,8 +137,15 @@
             (unless (and (stringp buffer-file-name)
                          (string-match "\\.json\\'" buffer-file-name))
               (lsp-deferred))))
-(add-hook 'typescript-mode-hook #'lsp-deferred)
 (add-hook 'web-mode-hook #'lsp-deferred)
+(add-hook 'typescript-mode-hook #'lsp-deferred)
+
+(defun trigger-lsp-update (window)
+  (if lsp-mode (run-with-timer 1 nil 'lsp-on-change 0 1 1)))
+(defun add-trigger-lsp-update ()
+  (make-local-variable 'window-state-change-functions)
+  (add-to-list 'window-state-change-functions 'trigger-lsp-update))
+(add-hook 'typescript-mode-hook #'add-trigger-lsp-update)
 
 
 
@@ -225,14 +238,19 @@
  '(js-indent-level 2)
  '(js-switch-indent-offset 2)
  '(js2-strict-missing-semi-warning nil)
+ '(lsp-completion-enable nil)
+ '(lsp-enable-snippet nil)
  '(magit-auto-revert-mode nil)
  '(make-backup-files nil)
  '(menu-bar-mode nil)
+ '(mode-line-format
+   '("%e" mode-line-front-space mode-line-mule-info mode-line-client mode-line-modified mode-line-remote mode-line-frame-identification mode-line-buffer-identification "   " mode-line-position "  " mode-line-modes mode-line-misc-info mode-line-end-spaces))
  '(org-capture-templates
    '(("t" "TODO" entry
       (file+headline "todo.org" "Tasks")
       "** TODO %?
    %u")))
+ '(org-startup-folded nil)
  '(package-archives
    '(("gnu" . "https://elpa.gnu.org/packages/")
      ("melpa" . "https://melpa.org/packages/")))
