@@ -4,6 +4,7 @@
 
 (global-set-key [M-down] (quote scroll-up-line))
 (global-set-key [M-up] (quote scroll-down-line))
+(global-set-key (kbd "M-s M-o") 'occur)
 
 
 
@@ -70,6 +71,11 @@
 
 
 
+(with-eval-after-load 'hideshow
+  (define-key hs-minor-mode-map (kbd "C-`") 'hs-toggle-hiding))
+
+
+
 (global-undo-tree-mode)
 
 
@@ -86,6 +92,7 @@
   (add-to-list 'web-mode-indentation-params '("lineup-calls" . nil)))
 
 (add-to-list 'auto-mode-alist '("\\.tsx\\'" . web-mode))
+(add-to-list 'auto-mode-alist '("\\.css\\'" . web-mode))
 
 
 
@@ -98,6 +105,10 @@
 (with-eval-after-load 'projectile
   (setq projectile-completion-system 'ivy)
   (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map))
+
+
+
+(setq inferior-lisp-program "sbcl")
 
 
 
@@ -129,15 +140,22 @@
 
 
 
-(setq lsp-keymap-prefix "C-`")
-(global-set-key (kbd "M-n") 'flymake-goto-next-error)
-(global-set-key (kbd "M-p") 'flymake-goto-prev-error)
+(setq lsp-keymap-prefix "C-c l")
+(with-eval-after-load 'lsp-mode
+  (add-hook 'lsp-mode-hook
+            (lambda ()
+              (define-key lsp-mode-map (kbd "M-n") 'flymake-goto-next-error)
+              (define-key lsp-mode-map (kbd "M-p") 'flymake-goto-prev-error))))
 (add-hook 'js-mode-hook
           (lambda ()
             (unless (and (stringp buffer-file-name)
                          (string-match "\\.json\\'" buffer-file-name))
               (lsp-deferred))))
-(add-hook 'web-mode-hook #'lsp-deferred)
+(add-hook 'web-mode-hook
+          (lambda ()
+            (if (and (stringp buffer-file-name)
+                     (string-match "\\.tsx\\'" buffer-file-name))
+                (lsp-deferred))))
 (add-hook 'typescript-mode-hook #'lsp-deferred)
 
 (defun trigger-lsp-update (window)
@@ -146,6 +164,7 @@
   (make-local-variable 'window-state-change-functions)
   (add-to-list 'window-state-change-functions 'trigger-lsp-update))
 (add-hook 'typescript-mode-hook #'add-trigger-lsp-update)
+(add-hook 'web-mode-hook #'add-trigger-lsp-update)
 
 
 
@@ -169,43 +188,6 @@
   ;; Keep my scroll-up/down-line
   (define-key org-mode-map [M-down] (quote scroll-up-line))
   (define-key org-mode-map [M-up] (quote scroll-down-line)))
-
-
-
-;; https://stackoverflow.com/questions/3393834/how-to-move-forward-and-backward-in-emacs-mark-ring
-
-(defun marker-is-point-p (marker)
-  "test if marker is current point"
-  (and (eq (marker-buffer marker) (current-buffer))
-       (= (marker-position marker) (point))))
-
-(defun push-mark-maybe ()
-  "push mark onto `global-mark-ring' if mark head or tail is not current location"
-  (if (not global-mark-ring) (error "global-mark-ring empty")
-    (unless (or (marker-is-point-p (car global-mark-ring))
-                (marker-is-point-p (car (reverse global-mark-ring))))
-      (push-mark))))
-
-(defun backward-global-mark ()
-  "use `pop-global-mark', pushing current point if not on ring."
-  (interactive)
-  (push-mark-maybe)
-  (when (marker-is-point-p (car global-mark-ring))
-    (call-interactively 'pop-global-mark))
-  (call-interactively 'pop-global-mark))
-
-(defun forward-global-mark ()
-  "hack `pop-global-mark' to go in reverse, pushing current point if not on ring."
-  (interactive)
-  (push-mark-maybe)
-  (setq global-mark-ring (nreverse global-mark-ring))
-  (when (marker-is-point-p (car global-mark-ring))
-    (call-interactively 'pop-global-mark))
-  (call-interactively 'pop-global-mark)
-  (setq global-mark-ring (nreverse global-mark-ring)))
-
-(global-set-key [M-left] (quote backward-global-mark))
-(global-set-key [M-right] (quote forward-global-mark))
 
 
 
@@ -238,9 +220,9 @@
  '(js-indent-level 2)
  '(js-switch-indent-offset 2)
  '(js2-strict-missing-semi-warning nil)
- '(lsp-completion-enable nil)
  '(lsp-enable-snippet nil)
  '(magit-auto-revert-mode nil)
+ '(magit-bury-buffer-function 'magit-mode-quit-window)
  '(make-backup-files nil)
  '(menu-bar-mode nil)
  '(mode-line-format
@@ -255,10 +237,10 @@
    '(("gnu" . "https://elpa.gnu.org/packages/")
      ("melpa" . "https://melpa.org/packages/")))
  '(package-selected-packages
-   '(web-mode smex typescript-mode counsel undo-tree magit projectile lsp-mode))
+   '(slime web-mode smex typescript-mode counsel undo-tree magit projectile lsp-mode))
  '(projectile-indexing-method 'hybrid)
  '(projectile-project-root-files-bottom-up
-   '("package.json" ".projectile" ".git" ".hg" ".fslckout" "_FOSSIL_" ".bzr" "_darcs"))
+   '("package.json" "packages.lisp" ".projectile" ".git" ".hg" ".fslckout" "_FOSSIL_" ".bzr" "_darcs"))
  '(projectile-sort-order 'recentf)
  '(scroll-bar-mode nil)
  '(show-paren-delay 0)
