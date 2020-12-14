@@ -4,6 +4,14 @@
 
 (global-set-key [M-down] (quote scroll-up-line))
 (global-set-key [M-up] (quote scroll-down-line))
+(global-set-key [M-right] (lambda ()
+                            (interactive)
+                            (set-window-hscroll (selected-window)
+                                                (1+ (window-hscroll)))))
+(global-set-key [M-left] (lambda ()
+                           (interactive)
+                           (set-window-hscroll (selected-window)
+                                               (1- (window-hscroll)))))
 (global-set-key (kbd "M-s M-o") 'occur)
 
 
@@ -76,6 +84,12 @@
 
 
 
+(with-eval-after-load 'highlight-symbol
+  (global-set-key (kbd "M-[") 'highlight-symbol-prev)
+  (global-set-key (kbd "M-]") 'highlight-symbol-next))
+
+
+
 (global-undo-tree-mode)
 
 
@@ -109,6 +123,17 @@
 
 
 (setq inferior-lisp-program "sbcl")
+(setq slime-contribs '(slime-fancy slime-asdf))
+(add-hook 'slime-mode-hook 'highlight-symbol-mode)
+(with-eval-after-load 'slime-repl
+  (define-key slime-repl-mode-map (kbd "C-c C-v") nil)
+  (define-key slime-mode-indirect-map (kbd "C-c C-t") 'slime-trace-dialog-toggle-trace)
+  (global-set-key (kbd "C-c T") 'slime-trace-dialog)
+  (defun ora-slime-completion-in-region (_fn completions start end)
+    (funcall completion-in-region-function start end completions))
+  (advice-add
+   'slime-display-or-scroll-completions
+   :around #'ora-slime-completion-in-region))
 
 
 
@@ -202,6 +227,7 @@
  '(blink-cursor-mode nil)
  '(column-number-mode t)
  '(compilation-ask-about-save nil)
+ '(confirm-kill-processes nil)
  '(create-lockfiles nil)
  '(dired-listing-switches "-alX")
  '(global-auto-revert-mode t)
@@ -210,6 +236,7 @@
    '("SCCS" "RCS" "CVS" "MCVS" ".src" ".svn" ".git" ".hg" ".bzr" "_MTN" "_darcs" "{arch}" "node_modules" "coverage" ".log" "build"))
  '(grep-find-ignored-files
    '(".#*" "*.o" "*~" "*.bin" "*.lbin" "*.so" "*.a" "*.ln" "*.blg" "*.bbl" "*.elc" "*.lof" "*.glo" "*.idx" "*.lot" "*.fmt" "*.tfm" "*.class" "*.fas" "*.lib" "*.mem" "*.x86f" "*.sparcf" "*.dfsl" "*.pfsl" "*.d64fsl" "*.p64fsl" "*.lx64fsl" "*.lx32fsl" "*.dx64fsl" "*.dx32fsl" "*.fx64fsl" "*.fx32fsl" "*.sx64fsl" "*.sx32fsl" "*.wx64fsl" "*.wx32fsl" "*.fasl" "*.ufsl" "*.fsl" "*.dxl" "*.lo" "*.la" "*.gmo" "*.mo" "*.toc" "*.aux" "*.cp" "*.fn" "*.ky" "*.pg" "*.tp" "*.vr" "*.cps" "*.fns" "*.kys" "*.pgs" "*.tps" "*.vrs" "*.pyc" "*.pyo" "package-lock.json"))
+ '(highlight-symbol-idle-delay 0)
  '(indent-tabs-mode nil)
  '(inhibit-startup-screen t)
  '(ivy-magic-tilde nil)
@@ -237,19 +264,24 @@
    '(("gnu" . "https://elpa.gnu.org/packages/")
      ("melpa" . "https://melpa.org/packages/")))
  '(package-selected-packages
-   '(slime web-mode smex typescript-mode counsel undo-tree magit projectile lsp-mode))
+   '(highlight-symbol slime web-mode smex typescript-mode counsel undo-tree magit projectile lsp-mode))
+ '(projectile-globally-ignored-file-suffixes '(".fasl"))
  '(projectile-indexing-method 'hybrid)
  '(projectile-project-root-files-bottom-up
    '("package.json" "packages.lisp" ".projectile" ".git" ".hg" ".fslckout" "_FOSSIL_" ".bzr" "_darcs"))
  '(projectile-sort-order 'recentf)
+ '(projectile-use-git-grep t)
  '(scroll-bar-mode nil)
  '(show-paren-delay 0)
  '(show-paren-mode t)
+ '(slime-load-failed-fasl 'never)
  '(tool-bar-mode nil)
  '(tooltip-mode nil)
  '(truncate-lines t)
  '(typescript-indent-level 2)
  '(vc-follow-symlinks t)
+ '(vc-git-grep-template
+   "git --no-pager grep --untracked -In <C> -e <R> -- <F> ':!package-lock.json'")
  '(web-mode-code-indent-offset 2)
  '(web-mode-comment-formats
    '(("jsx" . "//")
