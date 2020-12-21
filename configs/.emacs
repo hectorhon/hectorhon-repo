@@ -27,7 +27,7 @@
 
 
 (defadvice yank (after indent-region activate)
-  (if (member major-mode '(typescript-mode))
+  (if (member major-mode '(js-mode lisp-mode))
       (indent-region (region-beginning) (region-end) nil)))
 
 
@@ -87,6 +87,21 @@
 (with-eval-after-load 'highlight-symbol
   (global-set-key (kbd "M-[") 'highlight-symbol-prev)
   (global-set-key (kbd "M-]") 'highlight-symbol-next))
+(add-hook 'prog-mode-hook 'highlight-symbol-mode)
+(add-hook 'prog-mode-hook 'display-fill-column-indicator-mode)
+
+
+
+(global-set-key (kbd "M-n") 'flymake-goto-next-error)
+(global-set-key (kbd "M-p") 'flymake-goto-prev-error)
+(add-hook 'js-mode-hook (lambda ()
+                          (unless (and (stringp buffer-file-name)
+                                       (or (string-match "\\.json\\'" buffer-file-name)))
+                            (flymake-eslint-enable))))
+(add-hook 'web-mode-hook (lambda ()
+                           (when (and (stringp buffer-file-name)
+                                      (or (string-match "\\.jsx\\'" buffer-file-name)))
+                             (flymake-eslint-enable))))
 
 
 
@@ -105,6 +120,7 @@
 (with-eval-after-load 'web-mode
   (add-to-list 'web-mode-indentation-params '("lineup-calls" . nil)))
 
+(add-to-list 'auto-mode-alist '("\\.jsx\\'" . web-mode))
 (add-to-list 'auto-mode-alist '("\\.tsx\\'" . web-mode))
 (add-to-list 'auto-mode-alist '("\\.css\\'" . web-mode))
 
@@ -124,11 +140,10 @@
 
 (setq inferior-lisp-program "sbcl")
 (setq slime-contribs '(slime-fancy slime-asdf))
-(add-hook 'slime-mode-hook 'highlight-symbol-mode)
 (with-eval-after-load 'slime-repl
   (define-key slime-repl-mode-map (kbd "C-c C-v") nil)
-  (define-key slime-mode-indirect-map (kbd "C-c C-t") 'slime-trace-dialog-toggle-trace)
-  (global-set-key (kbd "C-c T") 'slime-trace-dialog)
+  ;; (define-key slime-mode-indirect-map (kbd "C-c C-t") 'slime-trace-dialog-toggle-trace)
+  ;; (global-set-key (kbd "C-c T") 'slime-trace-dialog)
   (defun ora-slime-completion-in-region (_fn completions start end)
     (funcall completion-in-region-function start end completions))
   (advice-add
@@ -140,13 +155,15 @@
 (defvar node-modules-path nil)
 (defun update-node-modules-path ()
   "Hook to add/remove node_modules/.bin to 'exec-path."
-  (when node-modules-path           ; was previously set, unset it first
-    (message "Removing %s from exec-path" node-modules-path)
-    (setq exec-path (delete node-modules-path exec-path))
-    (setq node-modules-path nil))
+  ;; (when node-modules-path           ; was previously set, unset it first
+  ;;   (message "Removing %s from exec-path" node-modules-path)
+  ;;   (setq exec-path (delete node-modules-path exec-path))
+  ;;   (setq node-modules-path nil))
   (when (string-equal "npm" (projectile-project-type))
+    (make-local-variable 'node-modules-path)
+    (make-local-variable 'exec-path)
     (setq node-modules-path (concat (projectile-project-root) "node_modules/.bin"))
-    (message "Adding %s to exec-path" node-modules-path)
+    (message "Adding %s to local exec-path" node-modules-path)
     (add-to-list 'exec-path node-modules-path)))
 (add-hook 'js-mode-hook 'update-node-modules-path)
 (add-hook 'web-mode-hook 'update-node-modules-path)
@@ -174,7 +191,9 @@
 (add-hook 'js-mode-hook
           (lambda ()
             (unless (and (stringp buffer-file-name)
-                         (string-match "\\.json\\'" buffer-file-name))
+                         (or (string-match "\\.json\\'" buffer-file-name)
+                             (string-match "\\.js\\'" buffer-file-name)
+                             (string-match "\\.jsx\\'" buffer-file-name)))
               (lsp-deferred))))
 (add-hook 'web-mode-hook
           (lambda ()
@@ -221,14 +240,13 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(ansi-color-names-vector
-   ["black" "#d55e00" "#009e73" "#f8ec59" "#0072b2" "#cc79a7" "#56b4e9" "white"])
  '(auto-save-default nil)
  '(blink-cursor-mode nil)
  '(column-number-mode t)
  '(compilation-ask-about-save nil)
  '(confirm-kill-processes nil)
  '(create-lockfiles nil)
+ '(custom-enabled-themes '(leuven))
  '(dired-listing-switches "-alX")
  '(global-auto-revert-mode t)
  '(global-display-line-numbers-mode t)
@@ -247,9 +265,13 @@
  '(js-indent-level 2)
  '(js-switch-indent-offset 2)
  '(js2-strict-missing-semi-warning nil)
+ '(line-spacing 0.1)
  '(lsp-enable-snippet nil)
+ '(lsp-enable-symbol-highlighting nil)
+ '(lsp-headerline-breadcrumb-enable nil)
  '(magit-auto-revert-mode nil)
  '(magit-bury-buffer-function 'magit-mode-quit-window)
+ '(magit-display-buffer-function 'magit-display-buffer-fullframe-status-v1)
  '(make-backup-files nil)
  '(menu-bar-mode nil)
  '(mode-line-format
@@ -264,7 +286,7 @@
    '(("gnu" . "https://elpa.gnu.org/packages/")
      ("melpa" . "https://melpa.org/packages/")))
  '(package-selected-packages
-   '(highlight-symbol slime web-mode smex typescript-mode counsel undo-tree magit projectile lsp-mode))
+   '(flymake-eslint highlight-symbol slime web-mode smex typescript-mode counsel undo-tree magit projectile lsp-mode))
  '(projectile-globally-ignored-file-suffixes '(".fasl"))
  '(projectile-indexing-method 'hybrid)
  '(projectile-project-root-files-bottom-up
@@ -274,10 +296,11 @@
  '(scroll-bar-mode nil)
  '(show-paren-delay 0)
  '(show-paren-mode t)
+ '(slime-compile-file-options '(:fasl-directory "/home/hectorhon/tmp/fasl/"))
  '(slime-load-failed-fasl 'never)
  '(tool-bar-mode nil)
  '(tooltip-mode nil)
- '(truncate-lines t)
+ '(truncate-lines nil)
  '(typescript-indent-level 2)
  '(vc-follow-symlinks t)
  '(vc-git-grep-template
@@ -297,6 +320,15 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:family "DejaVu Sans Mono" :foundry "PfEd" :slant normal :weight normal :height 105 :width normal))))
- '(lazy-highlight ((t (:background "yellow"))))
- '(region ((t (:background "moccasin")))))
+ '(default ((t (:family "Monoid" :foundry "PfEd" :slant normal :weight normal :height 98 :width semi-condensed))))
+ '(dired-directory ((t (:background "#FFFFD2" :foreground "blue" :weight normal))))
+ '(dired-header ((t (:background "#FFFFD2" :foreground "blue" :weight normal))))
+ '(fill-column-indicator ((t (:inherit shadow :stipple nil :foreground "light blue" :inverse-video nil :box nil :strike-through nil :overline nil :underline nil :slant normal :weight normal))))
+ '(font-lock-warning-face ((t (:foreground "red" :weight normal))))
+ '(isearch ((t (:background "yellow" :underline "#FF9632" :weight normal))))
+ '(ivy-minibuffer-match-face-2 ((t (:background "#e99ce8" :weight normal))))
+ '(match ((t (:background "yellow" :foreground "black" :weight normal))))
+ '(minibuffer-prompt ((t (:background "yellow" :foreground "black" :weight normal))))
+ '(mode-line-buffer-id ((t (:foreground "white" :weight normal))))
+ '(secondary-selection ((t (:extend t :background "#FBE448" :weight normal))))
+ '(slime-repl-input-face ((t (:background "lavender" :foreground "blue" :weight normal)))))
