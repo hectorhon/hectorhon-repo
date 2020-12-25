@@ -126,11 +126,6 @@
 
 
 
-(ivy-mode 1)
-(global-set-key (kbd "M-x") 'counsel-M-x)
-
-
-
 (defvar project-marker-types
   '(("\\.asd" . asdf)
     ("package.json" . npm)))
@@ -148,9 +143,34 @@
   (cl-defmethod project-roots ((project (head marker)))
     (list (caddr project)))
   (cl-defmethod project-ignores ((project (head marker)) dir)
+    ;; Fix .gitignore in subdirectories being ignored by emacs vc
     (let* ((default-directory dir)
            (git-output (shell-command-to-string "git ls-files -z --others --ignored --exclude-standard --directory")))
       (butlast (split-string git-output "\0")))))
+(global-set-key (kbd "C-c p f") 'project-find-file)
+(global-set-key (kbd "C-c p g") 'project-find-regexp)
+(defun project--read-file-cpd-relative-2 (prompt all-files &optional predicate hist default)
+  (let* ((common-parent-directory
+          (let ((common-prefix (try-completion "" all-files)))
+            (if (> (length common-prefix) 0)
+                (file-name-directory common-prefix))))
+         (cpd-length (length common-parent-directory))
+         (prompt (if (zerop cpd-length)
+                     prompt
+                   (concat prompt (format " in %s" common-parent-directory))))
+         (substrings (sort
+                      (mapcar (lambda (s) (substring s cpd-length)) all-files)
+                      'file-newer-than-file-p))
+         (new-collection (project--file-completion-table substrings))
+         (res (project--completing-read-strict prompt
+                                               new-collection
+                                               predicate
+                                               hist (car substrings))))
+    (concat common-parent-directory res)))
+
+
+(ivy-mode 1)
+(global-set-key (kbd "M-x") 'counsel-M-x)
 
 
 
@@ -301,6 +321,7 @@
      ("melpa" . "https://melpa.org/packages/")))
  '(package-selected-packages
    '(flymake-eslint highlight-symbol slime web-mode smex typescript-mode counsel undo-tree magit lsp-mode))
+ '(project-read-file-name-function 'project--read-file-cpd-relative-2)
  '(scroll-bar-mode nil)
  '(show-paren-delay 0)
  '(show-paren-mode t)
