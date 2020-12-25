@@ -131,10 +131,26 @@
 
 
 
-(projectile-mode +1)
-(with-eval-after-load 'projectile
-  (setq projectile-completion-system 'ivy)
-  (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map))
+(defvar project-marker-types
+  '(("\\.asd" . asdf)
+    ("package.json" . npm)))
+(defun project-try-marker (dir)
+  (let* ((regex (string-join (mapcar 'car project-marker-types) "\\|"))
+         (root (locate-dominating-file dir
+                                       (lambda (name)
+                                         (directory-files name nil regex t)))))
+    (when root
+      (let* ((marker-file-name (car (directory-files root nil regex t)))
+             (project-type (alist-get marker-file-name project-marker-types nil nil 'string-match)))
+        (list 'marker project-type root)))))
+(with-eval-after-load 'project
+  (add-to-list 'project-find-functions 'project-try-marker)
+  (cl-defmethod project-roots ((project (head marker)))
+    (list (caddr project)))
+  (cl-defmethod project-ignores ((project (head marker)) dir)
+    (let* ((default-directory dir)
+           (git-output (shell-command-to-string "git ls-files -z --others --ignored --exclude-standard --directory")))
+      (butlast (split-string git-output "\0")))))
 
 
 
@@ -152,19 +168,18 @@
 
 
 
-(defvar node-modules-path nil)
 (defun update-node-modules-path ()
   "Hook to add/remove node_modules/.bin to 'exec-path."
-  ;; (when node-modules-path           ; was previously set, unset it first
-  ;;   (message "Removing %s from exec-path" node-modules-path)
-  ;;   (setq exec-path (delete node-modules-path exec-path))
-  ;;   (setq node-modules-path nil))
-  (when (string-equal "npm" (projectile-project-type))
-    (make-local-variable 'node-modules-path)
-    (make-local-variable 'exec-path)
-    (setq node-modules-path (concat (projectile-project-root) "node_modules/.bin"))
-    (message "Adding %s to local exec-path" node-modules-path)
-    (add-to-list 'exec-path node-modules-path)))
+  (let ((project (project-current)))
+    (when (eq 'marker (car project))
+      (let ((project-type (cadr project))
+            (project-root (file-name-as-directory (caddr project))))
+        (when (eq 'npm project-type)
+          (make-local-variable 'node-modules-path)
+          (make-local-variable 'exec-path)
+          (setq node-modules-path (concat project-root "node_modules/.bin"))
+          (message "Adding %s to local exec-path" node-modules-path)
+          (add-to-list 'exec-path node-modules-path))))))
 (add-hook 'js-mode-hook 'update-node-modules-path)
 (add-hook 'web-mode-hook 'update-node-modules-path)
 (add-hook 'typescript-mode-hook 'update-node-modules-path)
@@ -175,10 +190,10 @@
 (add-hook 'compilation-filter-hook
           (lambda ()
             (ansi-color-apply-on-region compilation-filter-start (point))))
-(add-hook 'typescript-mode-hook
-          (lambda ()
-            (when (string-equal "npm" (projectile-project-type))
-              (set (make-local-variable 'compile-command) "npm run build "))))
+;; (add-hook 'typescript-mode-hook
+;;           (lambda ()
+;;             (when (string-equal "npm" (projectile-project-type))
+;;               (set (make-local-variable 'compile-command) "npm run build "))))
 
 
 
@@ -259,8 +274,7 @@
  '(inhibit-startup-screen t)
  '(ivy-magic-tilde nil)
  '(ivy-sort-functions-alist
-   '((projectile-completing-read . file-newer-than-file-p)
-     (read-file-name-internal . ido-file-extension-lessp)
+   '((read-file-name-internal . file-newer-than-file-p)
      (t . ivy-string<)))
  '(js-indent-level 2)
  '(js-switch-indent-offset 2)
@@ -286,13 +300,7 @@
    '(("gnu" . "https://elpa.gnu.org/packages/")
      ("melpa" . "https://melpa.org/packages/")))
  '(package-selected-packages
-   '(flymake-eslint highlight-symbol slime web-mode smex typescript-mode counsel undo-tree magit projectile lsp-mode))
- '(projectile-globally-ignored-file-suffixes '(".fasl"))
- '(projectile-indexing-method 'hybrid)
- '(projectile-project-root-files-bottom-up
-   '("package.json" "packages.lisp" ".projectile" ".git" ".hg" ".fslckout" "_FOSSIL_" ".bzr" "_darcs"))
- '(projectile-sort-order 'recentf)
- '(projectile-use-git-grep t)
+   '(flymake-eslint highlight-symbol slime web-mode smex typescript-mode counsel undo-tree magit lsp-mode))
  '(scroll-bar-mode nil)
  '(show-paren-delay 0)
  '(show-paren-mode t)
