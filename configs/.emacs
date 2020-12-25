@@ -304,8 +304,6 @@
  '(lsp-enable-symbol-highlighting nil)
  '(lsp-headerline-breadcrumb-enable nil)
  '(magit-auto-revert-mode nil)
- '(magit-bury-buffer-function 'magit-mode-quit-window)
- '(magit-display-buffer-function 'magit-display-buffer-fullframe-status-v1)
  '(make-backup-files nil)
  '(menu-bar-mode nil)
  '(mode-line-format
