@@ -87,7 +87,8 @@
 (with-eval-after-load 'highlight-symbol
   (global-set-key (kbd "M-[") 'highlight-symbol-prev)
   (global-set-key (kbd "M-]") 'highlight-symbol-next))
-(add-hook 'prog-mode-hook 'highlight-symbol-mode)
+(if (fboundp 'highlight-symbol-mode)
+    (add-hook 'prog-mode-hook 'highlight-symbol-mode))
 (add-hook 'prog-mode-hook 'display-fill-column-indicator-mode)
 
 
@@ -105,7 +106,8 @@
 
 
 
-(global-undo-tree-mode)
+(if (fboundp 'global-undo-tree-mode)
+    (global-undo-tree-mode))
 
 
 
@@ -169,8 +171,10 @@
     (concat common-parent-directory res)))
 
 
-(ivy-mode 1)
-(global-set-key (kbd "M-x") 'counsel-M-x)
+(if (fboundp 'ivy-mode)
+    (ivy-mode 1))
+(if (fboundp 'counsel-M-x)
+    (global-set-key (kbd "M-x") 'counsel-M-x))
 
 
 
