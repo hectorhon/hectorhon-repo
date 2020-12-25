@@ -152,17 +152,17 @@
 (global-set-key (kbd "C-c p f") 'project-find-file)
 (global-set-key (kbd "C-c p g") 'project-find-regexp)
 (defun project--read-file-cpd-relative-2 (prompt all-files &optional predicate hist default)
-  (let* ((common-parent-directory
-          (let ((common-prefix (try-completion "" all-files)))
+  "Like `project--read-file-cpd-relative', but with sorting by modified date."
+  (let* ((all-files-sorted (sort all-files 'file-newer-than-file-p))
+         (common-parent-directory
+          (let ((common-prefix (try-completion "" all-files-sorted)))
             (if (> (length common-prefix) 0)
                 (file-name-directory common-prefix))))
          (cpd-length (length common-parent-directory))
          (prompt (if (zerop cpd-length)
                      prompt
                    (concat prompt (format " in %s" common-parent-directory))))
-         (substrings (sort
-                      (mapcar (lambda (s) (substring s cpd-length)) all-files)
-                      'file-newer-than-file-p))
+         (substrings (mapcar (lambda (s) (substring s cpd-length)) all-files-sorted))
          (new-collection (project--file-completion-table substrings))
          (res (project--completing-read-strict prompt
                                                new-collection
