@@ -84,11 +84,8 @@
 
 
 
-(with-eval-after-load 'highlight-symbol
-  (global-set-key (kbd "M-[") 'highlight-symbol-prev)
-  (global-set-key (kbd "M-]") 'highlight-symbol-next))
-(if (fboundp 'highlight-symbol-mode)
-    (add-hook 'prog-mode-hook 'highlight-symbol-mode))
+(if (fboundp 'highlight-thing-mode)
+    (add-hook 'prog-mode-hook 'highlight-thing-mode))
 (add-hook 'prog-mode-hook 'display-fill-column-indicator-mode)
 
 
@@ -293,7 +290,8 @@
    '("SCCS" "RCS" "CVS" "MCVS" ".src" ".svn" ".git" ".hg" ".bzr" "_MTN" "_darcs" "{arch}" "node_modules" "coverage" ".log" "build"))
  '(grep-find-ignored-files
    '(".#*" "*.o" "*~" "*.bin" "*.lbin" "*.so" "*.a" "*.ln" "*.blg" "*.bbl" "*.elc" "*.lof" "*.glo" "*.idx" "*.lot" "*.fmt" "*.tfm" "*.class" "*.fas" "*.lib" "*.mem" "*.x86f" "*.sparcf" "*.dfsl" "*.pfsl" "*.d64fsl" "*.p64fsl" "*.lx64fsl" "*.lx32fsl" "*.dx64fsl" "*.dx32fsl" "*.fx64fsl" "*.fx32fsl" "*.sx64fsl" "*.sx32fsl" "*.wx64fsl" "*.wx32fsl" "*.fasl" "*.ufsl" "*.fsl" "*.dxl" "*.lo" "*.la" "*.gmo" "*.mo" "*.toc" "*.aux" "*.cp" "*.fn" "*.ky" "*.pg" "*.tp" "*.vr" "*.cps" "*.fns" "*.kys" "*.pgs" "*.tps" "*.vrs" "*.pyc" "*.pyo" "package-lock.json"))
- '(highlight-symbol-idle-delay 0)
+ '(highlight-thing-case-sensitive-p t)
+ '(highlight-thing-delay-seconds 0.0)
  '(indent-tabs-mode nil)
  '(inhibit-startup-screen t)
  '(ivy-magic-tilde nil)
@@ -322,7 +320,7 @@
    '(("gnu" . "https://elpa.gnu.org/packages/")
      ("melpa" . "https://melpa.org/packages/")))
  '(package-selected-packages
-   '(flymake-eslint highlight-symbol slime web-mode smex typescript-mode counsel undo-tree magit lsp-mode))
+   '(highlight-thing flymake-eslint slime web-mode smex typescript-mode counsel undo-tree magit lsp-mode))
  '(project-read-file-name-function 'project--read-file-cpd-relative-2)
  '(scroll-bar-mode nil)
  '(show-paren-delay 0)
@@ -356,6 +354,7 @@
  '(dired-header ((t (:background "#FFFFD2" :foreground "blue" :weight normal))))
  '(fill-column-indicator ((t (:inherit shadow :stipple nil :foreground "light blue" :inverse-video nil :box nil :strike-through nil :overline nil :underline nil :slant normal :weight normal))))
  '(font-lock-warning-face ((t (:foreground "red" :weight normal))))
+ '(highlight-thing ((t (:inherit 'highlight))))
  '(isearch ((t (:background "yellow" :underline "#FF9632" :weight normal))))
  '(ivy-minibuffer-match-face-2 ((t (:background "#e99ce8" :weight normal))))
  '(match ((t (:background "yellow" :foreground "black" :weight normal))))
