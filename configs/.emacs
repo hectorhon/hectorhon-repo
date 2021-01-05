@@ -177,10 +177,17 @@
 
 (setq inferior-lisp-program "sbcl")
 (setq slime-contribs '(slime-fancy slime-asdf))
+(with-eval-after-load 'slime
+  (defun slime-inspect-symbol-at-point (string)
+    "Make slime-inspect take a symbol instead of string."
+    (interactive
+     (list (slime-read-from-minibuffer "Inspect symbol: " (slime-sexp-at-point))))
+    (slime-eval-async `(swank:init-inspector ,(concat "'" string)) 'slime-open-inspector))
+  (define-key slime-mode-map (kbd "C-c I") 'slime-inspect-symbol-at-point)
+  (define-key slime-mode-map (kbd "C-c i") 'slime-inspect))
 (with-eval-after-load 'slime-repl
   (define-key slime-repl-mode-map (kbd "C-c C-v") nil)
   ;; (define-key slime-mode-indirect-map (kbd "C-c C-t") 'slime-trace-dialog-toggle-trace)
-  ;; (global-set-key (kbd "C-c T") 'slime-trace-dialog)
   (defun ora-slime-completion-in-region (_fn completions start end)
     (funcall completion-in-region-function start end completions))
   (advice-add
@@ -285,7 +292,6 @@
  '(custom-enabled-themes '(leuven))
  '(dired-listing-switches "-alX")
  '(global-auto-revert-mode t)
- '(global-display-line-numbers-mode t)
  '(grep-find-ignored-directories
    '("SCCS" "RCS" "CVS" "MCVS" ".src" ".svn" ".git" ".hg" ".bzr" "_MTN" "_darcs" "{arch}" "node_modules" "coverage" ".log" "build"))
  '(grep-find-ignored-files
@@ -320,7 +326,7 @@
    '(("gnu" . "https://elpa.gnu.org/packages/")
      ("melpa" . "https://melpa.org/packages/")))
  '(package-selected-packages
-   '(highlight-thing flymake-eslint slime web-mode smex typescript-mode counsel undo-tree magit lsp-mode))
+   '(solarized-theme highlight-thing flymake-eslint slime web-mode smex typescript-mode counsel undo-tree magit lsp-mode))
  '(project-read-file-name-function 'project--read-file-cpd-relative-2)
  '(scroll-bar-mode nil)
  '(show-paren-delay 0)
@@ -349,16 +355,4 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:family "Monoid" :foundry "PfEd" :slant normal :weight normal :height 98 :width semi-condensed))))
- '(dired-directory ((t (:background "#FFFFD2" :foreground "blue" :weight normal))))
- '(dired-header ((t (:background "#FFFFD2" :foreground "blue" :weight normal))))
- '(fill-column-indicator ((t (:inherit shadow :stipple nil :foreground "light blue" :inverse-video nil :box nil :strike-through nil :overline nil :underline nil :slant normal :weight normal))))
- '(font-lock-warning-face ((t (:foreground "red" :weight normal))))
- '(highlight-thing ((t (:inherit 'highlight))))
- '(isearch ((t (:background "yellow" :underline "#FF9632" :weight normal))))
- '(ivy-minibuffer-match-face-2 ((t (:background "#e99ce8" :weight normal))))
- '(match ((t (:background "yellow" :foreground "black" :weight normal))))
- '(minibuffer-prompt ((t (:background "yellow" :foreground "black" :weight normal))))
- '(mode-line-buffer-id ((t (:foreground "white" :weight normal))))
- '(secondary-selection ((t (:extend t :background "#FBE448" :weight normal))))
- '(slime-repl-input-face ((t (:background "lavender" :foreground "blue" :weight normal)))))
+ '(highlight-thing ((t (:inherit 'highlight)))))
