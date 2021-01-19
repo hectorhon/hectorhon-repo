@@ -178,6 +178,12 @@
 (setq inferior-lisp-program "sbcl")
 (setq slime-contribs '(slime-fancy slime-asdf))
 (with-eval-after-load 'slime
+  (setq common-lisp-hyperspec-root "file:///home/hectorhon/Downloads/HyperSpec-7-0/HyperSpec/")
+  (advice-add 'hyperspec-lookup
+              :around
+            (lambda (orig-fun &rest args)
+              (setq-local browse-url-browser-function 'eww-browse-url)
+              (apply orig-fun args)))
   (defun slime-inspect-symbol-at-point (string)
     "Make slime-inspect take a symbol instead of string."
     (interactive
@@ -307,7 +313,6 @@
  '(js-indent-level 2)
  '(js-switch-indent-offset 2)
  '(js2-strict-missing-semi-warning nil)
- '(line-spacing 0.1)
  '(lsp-enable-snippet nil)
  '(lsp-enable-symbol-highlighting nil)
  '(lsp-headerline-breadcrumb-enable nil)
@@ -326,7 +331,7 @@
    '(("gnu" . "https://elpa.gnu.org/packages/")
      ("melpa" . "https://melpa.org/packages/")))
  '(package-selected-packages
-   '(solarized-theme highlight-thing flymake-eslint slime web-mode smex typescript-mode counsel undo-tree magit lsp-mode))
+   '(color-theme-sanityinc-tomorrow modus-themes solarized-theme highlight-thing flymake-eslint slime web-mode smex typescript-mode counsel undo-tree magit lsp-mode))
  '(project-read-file-name-function 'project--read-file-cpd-relative-2)
  '(scroll-bar-mode nil)
  '(show-paren-delay 0)
@@ -355,4 +360,5 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(default ((t (:family "Inconsolata" :foundry "PfEd" :slant normal :weight normal :height 120 :width normal))))
  '(highlight-thing ((t (:inherit 'highlight)))))
