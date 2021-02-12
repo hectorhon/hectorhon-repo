@@ -27,7 +27,7 @@
 
 
 (defadvice yank (after indent-region activate)
-  (if (member major-mode '(js-mode lisp-mode))
+  (if (member major-mode '(js-mode lisp-mode rust-mode))
       (indent-region (region-beginning) (region-end) nil)))
 
 
@@ -125,9 +125,16 @@
 
 
 
+(with-eval-after-load 'rust-mode
+  (define-key rust-mode-map (kbd "C-c C-c") 'rust-check)
+  (define-key rust-mode-map (kbd "C-c C-k") 'rust-test))
+
+
+
 (defvar project-marker-types
   '(("\\.asd" . asdf)
-    ("package.json" . npm)))
+    ("package.json" . npm)
+    ("Cargo.toml" . rust)))
 (defun project-try-marker (dir)
   (let* ((regex (string-join (mapcar 'car project-marker-types) "\\|"))
          (root (locate-dominating-file dir
@@ -295,9 +302,10 @@
  '(compilation-ask-about-save nil)
  '(confirm-kill-processes nil)
  '(create-lockfiles nil)
- '(custom-enabled-themes '(leuven))
  '(dired-listing-switches "-alX")
+ '(display-time-mode t)
  '(global-auto-revert-mode t)
+ '(global-display-line-numbers-mode t)
  '(grep-find-ignored-directories
    '("SCCS" "RCS" "CVS" "MCVS" ".src" ".svn" ".git" ".hg" ".bzr" "_MTN" "_darcs" "{arch}" "node_modules" "coverage" ".log" "build"))
  '(grep-find-ignored-files
@@ -331,8 +339,9 @@
    '(("gnu" . "https://elpa.gnu.org/packages/")
      ("melpa" . "https://melpa.org/packages/")))
  '(package-selected-packages
-   '(color-theme-sanityinc-tomorrow modus-themes solarized-theme highlight-thing flymake-eslint slime web-mode smex typescript-mode counsel undo-tree magit lsp-mode))
+   '(rust-mode color-theme-sanityinc-tomorrow modus-themes solarized-theme highlight-thing flymake-eslint slime web-mode smex typescript-mode counsel undo-tree magit lsp-mode))
  '(project-read-file-name-function 'project--read-file-cpd-relative-2)
+ '(ring-bell-function 'ignore)
  '(scroll-bar-mode nil)
  '(show-paren-delay 0)
  '(show-paren-mode t)
@@ -360,5 +369,9 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:family "Inconsolata" :foundry "PfEd" :slant normal :weight normal :height 120 :width normal))))
+ '(default ((t (:family "Consolas" :foundry "outline" :slant normal :weight normal :height 108 :width normal))))
  '(highlight-thing ((t (:inherit 'highlight)))))
+
+(setenv "PATH" (concat
+                "C:\\Program Files\\Git\\usr\\bin" ";"
+                (getenv "PATH")))
