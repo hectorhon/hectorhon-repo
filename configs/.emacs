@@ -19,15 +19,18 @@
 (defun format-buffer ()
   "Indent the entire buffer and deletes all trailing whitespace."
   (interactive)
-  (save-excursion
-    (indent-region (point-min) (point-max) nil))
-  (delete-trailing-whitespace))
+  (if lsp-mode
+      (lsp-format-buffer)
+    (progn
+      (save-excursion
+        (indent-region (point-min) (point-max) nil))
+      (delete-trailing-whitespace))))
 (global-set-key (kbd "C-c f") (quote format-buffer))
 
 
 
 (defadvice yank (after indent-region activate)
-  (if (member major-mode '(js-mode lisp-mode rust-mode))
+  (if (member major-mode '(js-mode lisp-mode rustic-mode java-mode))
       (indent-region (region-beginning) (region-end) nil)))
 
 
@@ -87,14 +90,20 @@
 (if (fboundp 'highlight-thing-mode)
     (add-hook 'prog-mode-hook 'highlight-thing-mode))
 (add-hook 'prog-mode-hook 'display-fill-column-indicator-mode)
+(add-hook 'prog-mode-hook 'display-line-numbers-mode)
 
 
 
-(global-set-key (kbd "M-n") 'flymake-goto-next-error)
-(global-set-key (kbd "M-p") 'flymake-goto-prev-error)
+(with-eval-after-load 'flymake
+  (define-key flymake-mode-map (kbd "M-n") 'flymake-goto-next-error)
+  (define-key flymake-mode-map (kbd "M-p") 'flymake-goto-prev-error))
+;; (with-eval-after-load 'flycheck
+;;   (define-key flycheck-mode-map (kbd "M-n") 'flycheck-next-error)
+;;   (define-key flycheck-mode-map (kbd "M-p") 'flycheck-previous-error))
 (add-hook 'js-mode-hook (lambda ()
-                          (unless (and (stringp buffer-file-name)
-                                       (or (string-match "\\.json\\'" buffer-file-name)))
+                          (unless (or (and (stringp buffer-file-name)
+                                           (or (string-match "\\.json\\'" buffer-file-name)))
+                                      (string-match "*HTTP Response*" (buffer-name)))
                             (flymake-eslint-enable))))
 (add-hook 'web-mode-hook (lambda ()
                            (when (and (stringp buffer-file-name)
@@ -125,16 +134,45 @@
 
 
 
-(with-eval-after-load 'rust-mode
-  (define-key rust-mode-map (kbd "C-c C-c") 'rust-check)
-  (define-key rust-mode-map (kbd "C-c C-k") 'rust-test))
+(with-eval-after-load 'rustic
+  (defun rustic-project-buffer-list ()
+    "(Replace the existing function.)"
+    (when-let ((pr (project-current)))
+      (if (fboundp 'project--buffer-list)
+          (project--buffer-list pr)
+        (let ((root (car (project-roots pr)))
+              bufs)
+          (dolist (buf (buffer-list))
+            (let ((filename (or (buffer-file-name buf)
+                                (buffer-local-value 'default-directory buf))))
+              (when (and filename (file-in-directory-p filename root))
+                (push buf bufs))))
+          (nreverse bufs)))))
+  (advice-add 'rustic-insert-errno-button :override (lambda () ()))
+  (add-hook 'rustic-mode-hook (lambda () (setq buffer-save-without-query t))))
+
+
+
+(add-hook 'java-mode-hook #'lsp-deferred)
+(add-hook 'java-mode-hook #'yas-minor-mode)
+
+
+
+(with-eval-after-load 'go-mode
+  (add-hook 'go-mode-hook #'lsp-deferred)
+  (defun lsp-go-install-save-hooks ()
+    (add-hook 'before-save-hook #'lsp-format-buffer t t)
+    (add-hook 'before-save-hook #'lsp-organize-imports t t))
+  (add-hook 'go-mode-hook #'lsp-go-install-save-hooks)
+  (add-hook 'go-mode-hook #'yas-minor-mode))
 
 
 
 (defvar project-marker-types
   '(("\\.asd" . asdf)
     ("package.json" . npm)
-    ("Cargo.toml" . rust)))
+    ("Cargo.toml" . rust)
+    ("pom.xml" . java)))
 (defun project-try-marker (dir)
   (let* ((regex (string-join (mapcar 'car project-marker-types) "\\|"))
          (root (locate-dominating-file dir
@@ -188,9 +226,9 @@
   (setq common-lisp-hyperspec-root "file:///home/hectorhon/Downloads/HyperSpec-7-0/HyperSpec/")
   (advice-add 'hyperspec-lookup
               :around
-            (lambda (orig-fun &rest args)
-              (setq-local browse-url-browser-function 'eww-browse-url)
-              (apply orig-fun args)))
+              (lambda (orig-fun &rest args)
+                (setq-local browse-url-browser-function 'eww-browse-url)
+                (apply orig-fun args)))
   (defun slime-inspect-symbol-at-point (string)
     "Make slime-inspect take a symbol instead of string."
     (interactive
@@ -228,9 +266,9 @@
 
 
 (global-set-key (kbd "<f5>") 'recompile)
-(add-hook 'compilation-filter-hook
-          (lambda ()
-            (ansi-color-apply-on-region compilation-filter-start (point))))
+;; (add-hook 'compilation-filter-hook
+;;           (lambda ()
+;;             (ansi-color-apply-on-region compilation-filter-start (point))))
 ;; (add-hook 'typescript-mode-hook
 ;;           (lambda ()
 ;;             (when (string-equal "npm" (projectile-project-type))
@@ -238,12 +276,7 @@
 
 
 
-(setq lsp-keymap-prefix "C-c l")
-(with-eval-after-load 'lsp-mode
-  (add-hook 'lsp-mode-hook
-            (lambda ()
-              (define-key lsp-mode-map (kbd "M-n") 'flymake-goto-next-error)
-              (define-key lsp-mode-map (kbd "M-p") 'flymake-goto-prev-error))))
+(setq read-process-output-max (* 1024 1024)) ;; 1mb - lsp performance
 (add-hook 'js-mode-hook
           (lambda ()
             (unless (and (stringp buffer-file-name)
@@ -300,12 +333,13 @@
  '(blink-cursor-mode nil)
  '(column-number-mode t)
  '(compilation-ask-about-save nil)
+ '(compilation-message-face 'default)
  '(confirm-kill-processes nil)
  '(create-lockfiles nil)
  '(dired-listing-switches "-alX")
  '(display-time-mode t)
+ '(gc-cons-threshold 100000000)
  '(global-auto-revert-mode t)
- '(global-display-line-numbers-mode t)
  '(grep-find-ignored-directories
    '("SCCS" "RCS" "CVS" "MCVS" ".src" ".svn" ".git" ".hg" ".bzr" "_MTN" "_darcs" "{arch}" "node_modules" "coverage" ".log" "build"))
  '(grep-find-ignored-files
@@ -321,25 +355,26 @@
  '(js-indent-level 2)
  '(js-switch-indent-offset 2)
  '(js2-strict-missing-semi-warning nil)
- '(lsp-enable-snippet nil)
- '(lsp-enable-symbol-highlighting nil)
  '(lsp-headerline-breadcrumb-enable nil)
+ '(lsp-java-server-install-dir "c:/Users/hectorhon/eclipse.jdt.ls/")
+ '(lsp-keymap-prefix "C-c l")
+ '(lsp-enable-symbol-highlighting nil)
+ '(lsp-enable-snippet nil)
  '(magit-auto-revert-mode nil)
  '(make-backup-files nil)
  '(menu-bar-mode nil)
- '(mode-line-format
-   '("%e" mode-line-front-space mode-line-mule-info mode-line-client mode-line-modified mode-line-remote mode-line-frame-identification mode-line-buffer-identification "   " mode-line-position "  " mode-line-modes mode-line-misc-info mode-line-end-spaces))
  '(org-capture-templates
    '(("t" "TODO" entry
       (file+headline "todo.org" "Tasks")
       "** TODO %?
    %u")))
+ '(org-src-block-faces 'nil)
  '(org-startup-folded nil)
  '(package-archives
    '(("gnu" . "https://elpa.gnu.org/packages/")
      ("melpa" . "https://melpa.org/packages/")))
  '(package-selected-packages
-   '(rust-mode color-theme-sanityinc-tomorrow modus-themes solarized-theme highlight-thing flymake-eslint slime web-mode smex typescript-mode counsel undo-tree magit lsp-mode))
+   '(rustic go-mode yasnippet lsp-java doom-themes company restclient color-theme-sanityinc-solarized color-theme-sanityinc-tomorrow modus-themes solarized-theme highlight-thing flymake-eslint slime web-mode smex typescript-mode counsel undo-tree magit lsp-mode))
  '(project-read-file-name-function 'project--read-file-cpd-relative-2)
  '(ring-bell-function 'ignore)
  '(scroll-bar-mode nil)
@@ -347,10 +382,12 @@
  '(show-paren-mode t)
  '(slime-compile-file-options '(:fasl-directory "/home/hectorhon/tmp/fasl/"))
  '(slime-load-failed-fasl 'never)
+ '(tab-width 4)
+ '(temporary-file-directory "c:/Users/hectorhon/AppData/Local/Temp/")
  '(tool-bar-mode nil)
  '(tooltip-mode nil)
  '(truncate-lines nil)
- '(typescript-indent-level 2)
+ '(vc-annotate-background-mode nil)
  '(vc-follow-symlinks t)
  '(vc-git-grep-template
    "git --no-pager grep --untracked -In <C> -e <R> -- <F> ':!package-lock.json'")
@@ -363,14 +400,22 @@
      ("php" . "/*")
      ("css" . "/*")))
  '(web-mode-enable-auto-quoting nil)
- '(web-mode-markup-indent-offset 2))
+ '(web-mode-markup-indent-offset 2)
+ '(window-divider-mode nil))
+
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:family "Consolas" :foundry "outline" :slant normal :weight normal :height 108 :width normal))))
- '(highlight-thing ((t (:inherit 'highlight)))))
+ '(default ((t (:family "Consolas" :foundry "outline" :slant normal :weight normal :height 102 :width normal))))
+ '(fixed-pitch ((t (:inherit default))))
+ '(rustic-compilation-column ((t (:inherit compilation-column-number))))
+ '(rustic-compilation-error ((t (:inherit compilation-error))))
+ '(rustic-compilation-info ((t (:inherit compilation-info))))
+ '(rustic-compilation-line ((t (:inherit compilation-line-number))))
+ '(rustic-compilation-warning ((t (:inherit compilation-warning))))
+ '(rustic-message ((t (:foreground "blue")))))
 
 (setenv "PATH" (concat
                 "C:\\Program Files\\Git\\usr\\bin" ";"
