@@ -30,7 +30,7 @@
 
 
 (defadvice yank (after indent-region activate)
-  (if (member major-mode '(js-mode lisp-mode rustic-mode java-mode))
+  (if (derived-mode-p 'prog-mode)
       (indent-region (region-beginning) (region-end) nil)))
 
 
@@ -100,15 +100,15 @@
 ;; (with-eval-after-load 'flycheck
 ;;   (define-key flycheck-mode-map (kbd "M-n") 'flycheck-next-error)
 ;;   (define-key flycheck-mode-map (kbd "M-p") 'flycheck-previous-error))
-(add-hook 'js-mode-hook (lambda ()
-                          (unless (or (and (stringp buffer-file-name)
-                                           (or (string-match "\\.json\\'" buffer-file-name)))
-                                      (string-match "*HTTP Response*" (buffer-name)))
-                            (flymake-eslint-enable))))
-(add-hook 'web-mode-hook (lambda ()
-                           (when (and (stringp buffer-file-name)
-                                      (or (string-match "\\.jsx\\'" buffer-file-name)))
-                             (flymake-eslint-enable))))
+;; (add-hook 'js-mode-hook (lambda ()
+;;                           (unless (or (and (stringp buffer-file-name)
+;;                                            (or (string-match "\\.json\\'" buffer-file-name)))
+;;                                       (string-match "*HTTP Response*" (buffer-name)))
+;;                             (flymake-eslint-enable))))
+;; (add-hook 'web-mode-hook (lambda ()
+;;                            (when (and (stringp buffer-file-name)
+;;                                       (or (string-match "\\.jsx\\'" buffer-file-name)))
+;;                              (flymake-eslint-enable))))
 
 
 
@@ -276,12 +276,30 @@
 
 
 
-(setq read-process-output-max (* 1024 1024)) ;; 1mb - lsp performance
+;; 1mb - lsp performance
+(setq read-process-output-max (* 1024 1024))
+(setq lsp-enable-symbol-highlighting nil)
+;; (setq lsp-ui-doc-enable nil)
+;; (setq lsp-ui-doc-show-with-cursor nil)
+;; (setq lsp-ui-doc-show-with-mouse nil)
+;; (setq lsp-lens-enable nil)
+;; (setq lsp-ui-sideline-enable nil)
+;; (setq lsp-ui-sideline-show-code-actions nil)
+;; (setq lsp-ui-sideline-enable nil)
+;; (setq lsp-ui-sideline-show-hover nil)
+;; (setq lsp-modeline-code-actions-enable nil)
+;; (setq lsp-eldoc-enable-hover nil)
+;; (setq lsp-modeline-diagnostics-enable nil)
+;; (setq lsp-enable-snippet nil)
+(add-hook 'js-mode-hook
+          (lambda ()
+            (define-key js-mode-map (kbd "M-.") 'lsp-find-definition)))
 (add-hook 'js-mode-hook
           (lambda ()
             (unless (and (stringp buffer-file-name)
                          (or (string-match "\\.json\\'" buffer-file-name)
-                             (string-match "\\.js\\'" buffer-file-name)
+                             (and (string-match "\\.js\\'" buffer-file-name)
+                                  (not (project-current)))
                              (string-match "\\.jsx\\'" buffer-file-name)))
               (lsp-deferred))))
 (add-hook 'web-mode-hook
@@ -355,11 +373,8 @@
  '(js-indent-level 2)
  '(js-switch-indent-offset 2)
  '(js2-strict-missing-semi-warning nil)
- '(lsp-headerline-breadcrumb-enable nil)
  '(lsp-java-server-install-dir "c:/Users/hectorhon/eclipse.jdt.ls/")
  '(lsp-keymap-prefix "C-c l")
- '(lsp-enable-symbol-highlighting nil)
- '(lsp-enable-snippet nil)
  '(magit-auto-revert-mode nil)
  '(make-backup-files nil)
  '(menu-bar-mode nil)
@@ -374,7 +389,7 @@
    '(("gnu" . "https://elpa.gnu.org/packages/")
      ("melpa" . "https://melpa.org/packages/")))
  '(package-selected-packages
-   '(rustic go-mode yasnippet lsp-java doom-themes company restclient color-theme-sanityinc-solarized color-theme-sanityinc-tomorrow modus-themes solarized-theme highlight-thing flymake-eslint slime web-mode smex typescript-mode counsel undo-tree magit lsp-mode))
+   '(rustic go-mode yasnippet doom-themes company restclient color-theme-sanityinc-solarized color-theme-sanityinc-tomorrow modus-themes solarized-theme highlight-thing slime web-mode smex typescript-mode counsel undo-tree magit lsp-mode))
  '(project-read-file-name-function 'project--read-file-cpd-relative-2)
  '(ring-bell-function 'ignore)
  '(scroll-bar-mode nil)
@@ -415,7 +430,7 @@
  '(rustic-compilation-info ((t (:inherit compilation-info))))
  '(rustic-compilation-line ((t (:inherit compilation-line-number))))
  '(rustic-compilation-warning ((t (:inherit compilation-warning))))
- '(rustic-message ((t (:foreground "blue")))))
+ '(rustic-message ((t (:weight bold)))))
 
 (setenv "PATH" (concat
                 "C:\\Program Files\\Git\\usr\\bin" ";"
