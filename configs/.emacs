@@ -19,7 +19,7 @@
 (defun format-buffer ()
   "Indent the entire buffer and deletes all trailing whitespace."
   (interactive)
-  (if lsp-mode
+  (if (and (boundp 'lsp-mode) lsp-mode)
       (lsp-format-buffer)
     (progn
       (save-excursion
@@ -87,8 +87,8 @@
 
 
 
-(if (fboundp 'highlight-thing-mode)
-    (add-hook 'prog-mode-hook 'highlight-thing-mode))
+;; (if (fboundp 'highlight-thing-mode)
+;;     (add-hook 'prog-mode-hook 'highlight-thing-mode))
 (add-hook 'prog-mode-hook 'display-fill-column-indicator-mode)
 (add-hook 'prog-mode-hook 'display-line-numbers-mode)
 
@@ -100,16 +100,15 @@
 ;; (with-eval-after-load 'flycheck
 ;;   (define-key flycheck-mode-map (kbd "M-n") 'flycheck-next-error)
 ;;   (define-key flycheck-mode-map (kbd "M-p") 'flycheck-previous-error))
-;; (add-hook 'js-mode-hook (lambda ()
-;;                           (unless (or (and (stringp buffer-file-name)
-;;                                            (or (string-match "\\.json\\'" buffer-file-name)))
-;;                                       (string-match "*HTTP Response*" (buffer-name)))
-;;                             (flymake-eslint-enable))))
 ;; (add-hook 'web-mode-hook (lambda ()
 ;;                            (when (and (stringp buffer-file-name)
 ;;                                       (or (string-match "\\.jsx\\'" buffer-file-name)))
 ;;                              (flymake-eslint-enable))))
-
+(with-eval-after-load 'rjsx-mode
+  (define-key rjsx-mode-map "<" nil)
+  (define-key rjsx-mode-map (kbd "C-d") nil)
+  (define-key rjsx-mode-map ">" nil)
+  (add-hook 'rjsx-mode-hook (lambda () (flymake-eslint-enable))))
 
 
 (if (fboundp 'global-undo-tree-mode)
@@ -122,15 +121,18 @@
 
 
 (advice-add 'js--multi-line-declaration-indentation :around (lambda (orig-fun &rest args) nil))
+(advice-add 'js-find-symbol :around (lambda (orig-fun &rest args)
+                                      (if (and (boundp 'lsp-mode) lsp-mode)
+                                          (lsp-find-definition)
+                                        (apply orig-fun nil))))
 
 
 
 (with-eval-after-load 'web-mode
   (add-to-list 'web-mode-indentation-params '("lineup-calls" . nil)))
 
-(add-to-list 'auto-mode-alist '("\\.jsx\\'" . web-mode))
-(add-to-list 'auto-mode-alist '("\\.tsx\\'" . web-mode))
-(add-to-list 'auto-mode-alist '("\\.css\\'" . web-mode))
+;; (add-to-list 'auto-mode-alist '("\\.jsx\\'" . web-mode))
+;; (add-to-list 'auto-mode-alist '("\\.tsx\\'" . web-mode))
 
 
 
@@ -149,7 +151,10 @@
                 (push buf bufs))))
           (nreverse bufs)))))
   (advice-add 'rustic-insert-errno-button :override (lambda () ()))
-  (add-hook 'rustic-mode-hook (lambda () (setq buffer-save-without-query t))))
+  (add-hook 'rustic-mode-hook
+            (lambda ()
+              (setq buffer-save-without-query t)
+              (advice-remove 'save-some-buffers #'rustic-save-some-buffers-advice))))
 
 
 
@@ -259,8 +264,19 @@
           (setq node-modules-path (concat project-root "node_modules/.bin"))
           (message "Adding %s to local exec-path" node-modules-path)
           (add-to-list 'exec-path node-modules-path))))))
+(add-hook 'js-mode-hook
+          (lambda ()
+            (cond ((and (project-current)
+                        (stringp buffer-file-name)
+                        (or (string-match "\\.js\\'" buffer-file-name)))
+                   (lsp-deferred))
+                  ((and (project-current)
+                        (stringp buffer-file-name)
+                        (or (string-match "\\.jsx\\'" buffer-file-name)))
+                   (flymake-eslint-enable)))))
 (add-hook 'js-mode-hook 'update-node-modules-path)
-(add-hook 'web-mode-hook 'update-node-modules-path)
+;; (add-hook 'web-mode-hook 'update-node-modules-path)
+(add-hook 'typescript-mode-hook #'lsp-deferred)
 (add-hook 'typescript-mode-hook 'update-node-modules-path)
 
 
@@ -291,31 +307,13 @@
 ;; (setq lsp-eldoc-enable-hover nil)
 ;; (setq lsp-modeline-diagnostics-enable nil)
 ;; (setq lsp-enable-snippet nil)
-(add-hook 'js-mode-hook
-          (lambda ()
-            (define-key js-mode-map (kbd "M-.") 'lsp-find-definition)))
-(add-hook 'js-mode-hook
-          (lambda ()
-            (unless (and (stringp buffer-file-name)
-                         (or (string-match "\\.json\\'" buffer-file-name)
-                             (and (string-match "\\.js\\'" buffer-file-name)
-                                  (not (project-current)))
-                             (string-match "\\.jsx\\'" buffer-file-name)))
-              (lsp-deferred))))
-(add-hook 'web-mode-hook
-          (lambda ()
-            (if (and (stringp buffer-file-name)
-                     (string-match "\\.tsx\\'" buffer-file-name))
-                (lsp-deferred))))
-(add-hook 'typescript-mode-hook #'lsp-deferred)
-
 (defun trigger-lsp-update (window)
   (if lsp-mode (run-with-timer 1 nil 'lsp-on-change 0 1 1)))
 (defun add-trigger-lsp-update ()
   (make-local-variable 'window-state-change-functions)
   (add-to-list 'window-state-change-functions 'trigger-lsp-update))
 (add-hook 'typescript-mode-hook #'add-trigger-lsp-update)
-(add-hook 'web-mode-hook #'add-trigger-lsp-update)
+;; (add-hook 'web-mode-hook #'add-trigger-lsp-update)
 
 
 
@@ -358,10 +356,12 @@
  '(display-time-mode t)
  '(gc-cons-threshold 100000000)
  '(global-auto-revert-mode t)
+ '(grep-command "grep  -IirnH ")
  '(grep-find-ignored-directories
    '("SCCS" "RCS" "CVS" "MCVS" ".src" ".svn" ".git" ".hg" ".bzr" "_MTN" "_darcs" "{arch}" "node_modules" "coverage" ".log" "build"))
  '(grep-find-ignored-files
    '(".#*" "*.o" "*~" "*.bin" "*.lbin" "*.so" "*.a" "*.ln" "*.blg" "*.bbl" "*.elc" "*.lof" "*.glo" "*.idx" "*.lot" "*.fmt" "*.tfm" "*.class" "*.fas" "*.lib" "*.mem" "*.x86f" "*.sparcf" "*.dfsl" "*.pfsl" "*.d64fsl" "*.p64fsl" "*.lx64fsl" "*.lx32fsl" "*.dx64fsl" "*.dx32fsl" "*.fx64fsl" "*.fx32fsl" "*.sx64fsl" "*.sx32fsl" "*.wx64fsl" "*.wx32fsl" "*.fasl" "*.ufsl" "*.fsl" "*.dxl" "*.lo" "*.la" "*.gmo" "*.mo" "*.toc" "*.aux" "*.cp" "*.fn" "*.ky" "*.pg" "*.tp" "*.vr" "*.cps" "*.fns" "*.kys" "*.pgs" "*.tps" "*.vrs" "*.pyc" "*.pyo" "package-lock.json"))
+ '(grep-use-null-device nil)
  '(highlight-thing-case-sensitive-p t)
  '(highlight-thing-delay-seconds 0.0)
  '(indent-tabs-mode nil)
@@ -370,9 +370,11 @@
  '(ivy-sort-functions-alist
    '((read-file-name-internal . file-newer-than-file-p)
      (t . ivy-string<)))
- '(js-indent-level 2)
- '(js-switch-indent-offset 2)
+ '(js-indent-level 4)
+ '(js-switch-indent-offset 4)
  '(js2-strict-missing-semi-warning nil)
+ '(line-spacing nil)
+ '(lsp-headerline-breadcrumb-enable nil)
  '(lsp-java-server-install-dir "c:/Users/hectorhon/eclipse.jdt.ls/")
  '(lsp-keymap-prefix "C-c l")
  '(magit-auto-revert-mode nil)
@@ -389,10 +391,11 @@
    '(("gnu" . "https://elpa.gnu.org/packages/")
      ("melpa" . "https://melpa.org/packages/")))
  '(package-selected-packages
-   '(rustic go-mode yasnippet doom-themes company restclient color-theme-sanityinc-solarized color-theme-sanityinc-tomorrow modus-themes solarized-theme highlight-thing slime web-mode smex typescript-mode counsel undo-tree magit lsp-mode))
+   '(flymake-eslint pug-mode rustic go-mode yasnippet doom-themes company restclient color-theme-sanityinc-solarized color-theme-sanityinc-tomorrow modus-themes solarized-theme highlight-thing slime web-mode smex typescript-mode counsel undo-tree magit lsp-mode))
  '(project-read-file-name-function 'project--read-file-cpd-relative-2)
  '(ring-bell-function 'ignore)
  '(scroll-bar-mode nil)
+ '(sgml-basic-offset 4)
  '(show-paren-delay 0)
  '(show-paren-mode t)
  '(slime-compile-file-options '(:fasl-directory "/home/hectorhon/tmp/fasl/"))
@@ -406,7 +409,7 @@
  '(vc-follow-symlinks t)
  '(vc-git-grep-template
    "git --no-pager grep --untracked -In <C> -e <R> -- <F> ':!package-lock.json'")
- '(web-mode-code-indent-offset 2)
+ '(web-mode-code-indent-offset 4)
  '(web-mode-comment-formats
    '(("jsx" . "//")
      ("java" . "/*")
@@ -415,7 +418,7 @@
      ("php" . "/*")
      ("css" . "/*")))
  '(web-mode-enable-auto-quoting nil)
- '(web-mode-markup-indent-offset 2)
+ '(web-mode-markup-indent-offset 4)
  '(window-divider-mode nil))
 
 (custom-set-faces
@@ -423,7 +426,7 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:family "Consolas" :foundry "outline" :slant normal :weight normal :height 102 :width normal))))
+ '(default ((t (:family "Consolas" :foundry "outline" :slant normal :weight normal :height 108 :width normal))))
  '(fixed-pitch ((t (:inherit default))))
  '(rustic-compilation-column ((t (:inherit compilation-column-number))))
  '(rustic-compilation-error ((t (:inherit compilation-error))))
