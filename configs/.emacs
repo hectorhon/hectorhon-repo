@@ -1,4 +1,5 @@
-(windmove-default-keybindings)
+;; (windmove-default-keybindings)
+(global-set-key (kbd "M-`") 'other-window)
 
 
 
@@ -136,25 +137,30 @@
 
 
 
-(with-eval-after-load 'rustic
-  (defun rustic-project-buffer-list ()
-    "(Replace the existing function.)"
-    (when-let ((pr (project-current)))
-      (if (fboundp 'project--buffer-list)
-          (project--buffer-list pr)
-        (let ((root (car (project-roots pr)))
-              bufs)
-          (dolist (buf (buffer-list))
-            (let ((filename (or (buffer-file-name buf)
-                                (buffer-local-value 'default-directory buf))))
-              (when (and filename (file-in-directory-p filename root))
-                (push buf bufs))))
-          (nreverse bufs)))))
-  (advice-add 'rustic-insert-errno-button :override (lambda () ()))
-  (add-hook 'rustic-mode-hook
-            (lambda ()
-              (setq buffer-save-without-query t)
-              (advice-remove 'save-some-buffers #'rustic-save-some-buffers-advice))))
+;; (with-eval-after-load 'rustic
+;;   (defun rustic-project-buffer-list ()
+;;     "(Replace the existing function.)"
+;;     (when-let ((pr (project-current)))
+;;       (if (fboundp 'project--buffer-list)
+;;           (project--buffer-list pr)
+;;         (let ((root (car (project-roots pr)))
+;;               bufs)
+;;           (dolist (buf (buffer-list))
+;;             (let ((filename (or (buffer-file-name buf)
+;;                                 (buffer-local-value 'default-directory buf))))
+;;               (when (and filename (file-in-directory-p filename root))
+;;                 (push buf bufs))))
+;;           (nreverse bufs)))))
+;;   (advice-add 'rustic-insert-errno-button :override (lambda () ()))
+;;   (add-hook 'rustic-mode-hook
+;;             (lambda ()
+;;               (setq buffer-save-without-query t)
+;;               (advice-remove 'save-some-buffers #'rustic-save-some-buffers-advice))))
+
+(with-eval-after-load 'rust-mode
+  (define-key rust-mode-map (kbd "C-c C-c") 'rust-check)
+  (define-key rust-mode-map (kbd "C-c C-k") 'rust-compile)
+  (add-hook 'rust-mode-hook #'lsp-deferred))
 
 
 
@@ -294,7 +300,7 @@
 
 ;; 1mb - lsp performance
 (setq read-process-output-max (* 1024 1024))
-(setq lsp-enable-symbol-highlighting nil)
+;; (setq lsp-enable-symbol-highlighting nil)
 ;; (setq lsp-ui-doc-enable nil)
 ;; (setq lsp-ui-doc-show-with-cursor nil)
 ;; (setq lsp-ui-doc-show-with-mouse nil)
@@ -306,7 +312,6 @@
 ;; (setq lsp-modeline-code-actions-enable nil)
 ;; (setq lsp-eldoc-enable-hover nil)
 ;; (setq lsp-modeline-diagnostics-enable nil)
-;; (setq lsp-enable-snippet nil)
 (defun trigger-lsp-update (window)
   (if lsp-mode (run-with-timer 1 nil 'lsp-on-change 0 1 1)))
 (defun add-trigger-lsp-update ()
@@ -317,26 +322,27 @@
 
 
 
-(defun open-tasks-file ()
-  "Open my tasks file."
+(defun open-org-file ()
+  "Open my org file."
   (interactive)
   (require 'org)
-  (let ((my-todo-file
+  (let ((my-org-file
          (concat (file-name-as-directory org-directory)
-                 "todo.org")))
-    (find-file my-todo-file)))
-(global-set-key (kbd "<f12>") (quote open-tasks-file))
+                 "notes.org")))
+    (find-file my-org-file)))
+(global-set-key (kbd "<f12>") (quote open-org-file))
+(global-set-key (kbd "C-c a") 'org-agenda)
 
-(with-eval-after-load 'org
-  ;; Make windmove work in Org mode:
-  (add-hook 'org-shiftup-final-hook 'windmove-up)
-  (add-hook 'org-shiftleft-final-hook 'windmove-left)
-  (add-hook 'org-shiftdown-final-hook 'windmove-down)
-  (add-hook 'org-shiftright-final-hook 'windmove-right)
+;; (with-eval-after-load 'org
+;;   ;; Make windmove work in Org mode:
+;;   (add-hook 'org-shiftup-final-hook 'windmove-up)
+;;   (add-hook 'org-shiftleft-final-hook 'windmove-left)
+;;   (add-hook 'org-shiftdown-final-hook 'windmove-down)
+;;   (add-hook 'org-shiftright-final-hook 'windmove-right)
 
-  ;; Keep my scroll-up/down-line
-  (define-key org-mode-map [M-down] (quote scroll-up-line))
-  (define-key org-mode-map [M-up] (quote scroll-down-line)))
+;;   ;; Keep my scroll-up/down-line
+;;   (define-key org-mode-map [M-down] (quote scroll-up-line))
+;;   (define-key org-mode-map [M-up] (quote scroll-down-line)))
 
 
 
@@ -374,24 +380,27 @@
  '(js-switch-indent-offset 4)
  '(js2-strict-missing-semi-warning nil)
  '(line-spacing nil)
+ '(lsp-enable-snippet nil)
  '(lsp-headerline-breadcrumb-enable nil)
  '(lsp-java-server-install-dir "c:/Users/hectorhon/eclipse.jdt.ls/")
  '(lsp-keymap-prefix "C-c l")
+ '(lsp-rust-analyzer-diagnostics-disabled ["unresolved-proc-macro"])
+ '(lsp-rust-server 'rls)
  '(magit-auto-revert-mode nil)
  '(make-backup-files nil)
  '(menu-bar-mode nil)
- '(org-capture-templates
-   '(("t" "TODO" entry
-      (file+headline "todo.org" "Tasks")
-      "** TODO %?
-   %u")))
+ '(org-agenda-files '("~/org"))
+ '(org-capture-templates '(("t" "Todo" entry (file "~/org/notes.org") "* TODO %?")))
+ '(org-default-notes-file "~/org/notes.org")
+ '(org-refile-targets '((org-agenda-files :level . 1)))
  '(org-src-block-faces 'nil)
  '(org-startup-folded nil)
+ '(org-todo-keywords '((sequence "TODO" "ACTIVE" "DONE")))
  '(package-archives
    '(("gnu" . "https://elpa.gnu.org/packages/")
      ("melpa" . "https://melpa.org/packages/")))
  '(package-selected-packages
-   '(flymake-eslint pug-mode rustic go-mode yasnippet doom-themes company restclient color-theme-sanityinc-solarized color-theme-sanityinc-tomorrow modus-themes solarized-theme highlight-thing slime web-mode smex typescript-mode counsel undo-tree magit lsp-mode))
+   '(rust-mode flymake-eslint pug-mode go-mode yasnippet doom-themes company restclient color-theme-sanityinc-solarized color-theme-sanityinc-tomorrow modus-themes solarized-theme highlight-thing slime web-mode smex typescript-mode counsel undo-tree magit lsp-mode))
  '(project-read-file-name-function 'project--read-file-cpd-relative-2)
  '(ring-bell-function 'ignore)
  '(scroll-bar-mode nil)
@@ -405,7 +414,6 @@
  '(tool-bar-mode nil)
  '(tooltip-mode nil)
  '(truncate-lines nil)
- '(vc-annotate-background-mode nil)
  '(vc-follow-symlinks t)
  '(vc-git-grep-template
    "git --no-pager grep --untracked -In <C> -e <R> -- <F> ':!package-lock.json'")
@@ -418,8 +426,7 @@
      ("php" . "/*")
      ("css" . "/*")))
  '(web-mode-enable-auto-quoting nil)
- '(web-mode-markup-indent-offset 4)
- '(window-divider-mode nil))
+ '(web-mode-markup-indent-offset 4))
 
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
