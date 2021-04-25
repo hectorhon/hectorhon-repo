@@ -1,5 +1,5 @@
-;; (windmove-default-keybindings)
-(global-set-key (kbd "M-`") 'other-window)
+(windmove-default-keybindings)
+;; (global-set-key (kbd "M-`") 'other-window)
 
 
 
@@ -95,12 +95,12 @@
 
 
 
-(with-eval-after-load 'flymake
-  (define-key flymake-mode-map (kbd "M-n") 'flymake-goto-next-error)
-  (define-key flymake-mode-map (kbd "M-p") 'flymake-goto-prev-error))
-;; (with-eval-after-load 'flycheck
-;;   (define-key flycheck-mode-map (kbd "M-n") 'flycheck-next-error)
-;;   (define-key flycheck-mode-map (kbd "M-p") 'flycheck-previous-error))
+;; (with-eval-after-load 'flymake
+;;   (define-key flymake-mode-map (kbd "M-n") 'flymake-goto-next-error)
+;;   (define-key flymake-mode-map (kbd "M-p") 'flymake-goto-prev-error))
+(with-eval-after-load 'flycheck
+  (define-key flycheck-mode-map (kbd "M-n") 'flycheck-next-error)
+  (define-key flycheck-mode-map (kbd "M-p") 'flycheck-previous-error))
 ;; (add-hook 'web-mode-hook (lambda ()
 ;;                            (when (and (stringp buffer-file-name)
 ;;                                       (or (string-match "\\.jsx\\'" buffer-file-name)))
@@ -133,7 +133,7 @@
   (add-to-list 'web-mode-indentation-params '("lineup-calls" . nil)))
 
 ;; (add-to-list 'auto-mode-alist '("\\.jsx\\'" . web-mode))
-;; (add-to-list 'auto-mode-alist '("\\.tsx\\'" . web-mode))
+(add-to-list 'auto-mode-alist '("\\.tsx\\'" . web-mode))
 
 
 
@@ -281,7 +281,8 @@
                         (or (string-match "\\.jsx\\'" buffer-file-name)))
                    (flymake-eslint-enable)))))
 (add-hook 'js-mode-hook 'update-node-modules-path)
-;; (add-hook 'web-mode-hook 'update-node-modules-path)
+(add-hook 'web-mode-hook 'update-node-modules-path)
+(add-hook 'web-mode-hook #'lsp-deferred)
 (add-hook 'typescript-mode-hook #'lsp-deferred)
 (add-hook 'typescript-mode-hook 'update-node-modules-path)
 
@@ -300,7 +301,6 @@
 
 ;; 1mb - lsp performance
 (setq read-process-output-max (* 1024 1024))
-;; (setq lsp-enable-symbol-highlighting nil)
 ;; (setq lsp-ui-doc-enable nil)
 ;; (setq lsp-ui-doc-show-with-cursor nil)
 ;; (setq lsp-ui-doc-show-with-mouse nil)
@@ -317,7 +317,7 @@
 (defun add-trigger-lsp-update ()
   (make-local-variable 'window-state-change-functions)
   (add-to-list 'window-state-change-functions 'trigger-lsp-update))
-(add-hook 'typescript-mode-hook #'add-trigger-lsp-update)
+;; (add-hook 'typescript-mode-hook #'add-trigger-lsp-update)
 ;; (add-hook 'web-mode-hook #'add-trigger-lsp-update)
 
 
@@ -332,17 +332,6 @@
     (find-file my-org-file)))
 (global-set-key (kbd "<f12>") (quote open-org-file))
 (global-set-key (kbd "C-c a") 'org-agenda)
-
-;; (with-eval-after-load 'org
-;;   ;; Make windmove work in Org mode:
-;;   (add-hook 'org-shiftup-final-hook 'windmove-up)
-;;   (add-hook 'org-shiftleft-final-hook 'windmove-left)
-;;   (add-hook 'org-shiftdown-final-hook 'windmove-down)
-;;   (add-hook 'org-shiftright-final-hook 'windmove-right)
-
-;;   ;; Keep my scroll-up/down-line
-;;   (define-key org-mode-map [M-down] (quote scroll-up-line))
-;;   (define-key org-mode-map [M-up] (quote scroll-down-line)))
 
 
 
@@ -385,10 +374,13 @@
  '(lsp-java-server-install-dir "c:/Users/hectorhon/eclipse.jdt.ls/")
  '(lsp-keymap-prefix "C-c l")
  '(lsp-rust-analyzer-diagnostics-disabled ["unresolved-proc-macro"])
- '(lsp-rust-server 'rls)
  '(magit-auto-revert-mode nil)
  '(make-backup-files nil)
  '(menu-bar-mode nil)
+ '(mode-line-format
+   '("%e" "  " mode-line-misc-info mode-line-front-space mode-line-mule-info mode-line-client mode-line-modified mode-line-remote mode-line-frame-identification mode-line-buffer-identification "   " mode-line-position
+     (vc-mode vc-mode)
+     "  " mode-line-modes mode-line-end-spaces))
  '(org-agenda-files '("~/org"))
  '(org-capture-templates '(("t" "Todo" entry (file "~/org/notes.org") "* TODO %?")))
  '(org-default-notes-file "~/org/notes.org")
@@ -400,7 +392,7 @@
    '(("gnu" . "https://elpa.gnu.org/packages/")
      ("melpa" . "https://melpa.org/packages/")))
  '(package-selected-packages
-   '(rust-mode flymake-eslint pug-mode go-mode yasnippet doom-themes company restclient color-theme-sanityinc-solarized color-theme-sanityinc-tomorrow modus-themes solarized-theme highlight-thing slime web-mode smex typescript-mode counsel undo-tree magit lsp-mode))
+   '(flycheck lsp-treemacs treemacs rust-mode flymake-eslint pug-mode go-mode yasnippet doom-themes company restclient color-theme-sanityinc-solarized color-theme-sanityinc-tomorrow modus-themes solarized-theme highlight-thing slime web-mode smex typescript-mode counsel undo-tree magit lsp-mode))
  '(project-read-file-name-function 'project--read-file-cpd-relative-2)
  '(ring-bell-function 'ignore)
  '(scroll-bar-mode nil)
@@ -427,13 +419,12 @@
      ("css" . "/*")))
  '(web-mode-enable-auto-quoting nil)
  '(web-mode-markup-indent-offset 4))
-
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:family "Consolas" :foundry "outline" :slant normal :weight normal :height 108 :width normal))))
+ '(default ((t (:family "Consolas" :foundry "outline" :slant normal :weight normal :height 102 :width normal))))
  '(fixed-pitch ((t (:inherit default))))
  '(rustic-compilation-column ((t (:inherit compilation-column-number))))
  '(rustic-compilation-error ((t (:inherit compilation-error))))
@@ -441,6 +432,7 @@
  '(rustic-compilation-line ((t (:inherit compilation-line-number))))
  '(rustic-compilation-warning ((t (:inherit compilation-warning))))
  '(rustic-message ((t (:weight bold)))))
+
 
 (setenv "PATH" (concat
                 "C:\\Program Files\\Git\\usr\\bin" ";"
