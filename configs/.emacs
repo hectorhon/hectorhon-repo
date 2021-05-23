@@ -20,12 +20,9 @@
 (defun format-buffer ()
   "Indent the entire buffer and deletes all trailing whitespace."
   (interactive)
-  (if (and (boundp 'lsp-mode) lsp-mode)
-      (lsp-format-buffer)
-    (progn
-      (save-excursion
-        (indent-region (point-min) (point-max) nil))
-      (delete-trailing-whitespace))))
+  (save-excursion
+    (indent-region (point-min) (point-max) nil))
+  (delete-trailing-whitespace))
 (global-set-key (kbd "C-c f") (quote format-buffer))
 
 
@@ -84,7 +81,8 @@
 
 
 (with-eval-after-load 'hideshow
-  (define-key hs-minor-mode-map (kbd "C-`") 'hs-toggle-hiding))
+  (define-key hs-minor-mode-map (kbd "C-`") 'hs-hide-block)
+  (define-key hs-minor-mode-map (kbd "M-`") 'hs-show-block))
 
 
 
@@ -109,7 +107,8 @@
   (define-key rjsx-mode-map "<" nil)
   (define-key rjsx-mode-map (kbd "C-d") nil)
   (define-key rjsx-mode-map ">" nil)
-  (add-hook 'rjsx-mode-hook (lambda () (flymake-eslint-enable))))
+  ;; (add-hook 'rjsx-mode-hook (lambda () (flymake-eslint-enable)))
+  )
 
 
 (if (fboundp 'global-undo-tree-mode)
@@ -133,7 +132,8 @@
   (add-to-list 'web-mode-indentation-params '("lineup-calls" . nil)))
 
 ;; (add-to-list 'auto-mode-alist '("\\.jsx\\'" . web-mode))
-(add-to-list 'auto-mode-alist '("\\.tsx\\'" . web-mode))
+;; (add-to-list 'auto-mode-alist '("\\.tsx\\'" . typescript-mode))
+(add-to-list 'auto-mode-alist '("\\.tsx\\'" . rjsx-mode))
 
 
 
@@ -285,6 +285,9 @@
 (add-hook 'web-mode-hook #'lsp-deferred)
 (add-hook 'typescript-mode-hook #'lsp-deferred)
 (add-hook 'typescript-mode-hook 'update-node-modules-path)
+(add-hook 'rjsx-mode-hook (lambda ()
+                            (set (make-local-variable 'lsp-enable-indentation) nil)
+                            (lsp-deferred)))
 
 
 
@@ -368,12 +371,13 @@
  '(js-indent-level 4)
  '(js-switch-indent-offset 4)
  '(js2-strict-missing-semi-warning nil)
- '(line-spacing nil)
  '(lsp-enable-snippet nil)
  '(lsp-headerline-breadcrumb-enable nil)
  '(lsp-java-server-install-dir "c:/Users/hectorhon/eclipse.jdt.ls/")
  '(lsp-keymap-prefix "C-c l")
  '(lsp-rust-analyzer-diagnostics-disabled ["unresolved-proc-macro"])
+ '(lsp-signature-doc-lines 1)
+ '(lsp-signature-render-documentation nil)
  '(magit-auto-revert-mode nil)
  '(make-backup-files nil)
  '(menu-bar-mode nil)
@@ -392,7 +396,7 @@
    '(("gnu" . "https://elpa.gnu.org/packages/")
      ("melpa" . "https://melpa.org/packages/")))
  '(package-selected-packages
-   '(flycheck lsp-treemacs treemacs rust-mode flymake-eslint pug-mode go-mode yasnippet doom-themes company restclient color-theme-sanityinc-solarized color-theme-sanityinc-tomorrow modus-themes solarized-theme highlight-thing slime web-mode smex typescript-mode counsel undo-tree magit lsp-mode))
+   '(rjsx-mode flycheck rust-mode flymake-eslint pug-mode go-mode yasnippet doom-themes company restclient color-theme-sanityinc-solarized color-theme-sanityinc-tomorrow modus-themes solarized-theme highlight-thing slime web-mode smex typescript-mode counsel undo-tree magit lsp-mode))
  '(project-read-file-name-function 'project--read-file-cpd-relative-2)
  '(ring-bell-function 'ignore)
  '(scroll-bar-mode nil)
