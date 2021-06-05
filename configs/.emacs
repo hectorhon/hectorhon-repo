@@ -88,7 +88,7 @@
 
 ;; (if (fboundp 'highlight-thing-mode)
 ;;     (add-hook 'prog-mode-hook 'highlight-thing-mode))
-(add-hook 'prog-mode-hook 'display-fill-column-indicator-mode)
+;; (add-hook 'prog-mode-hook 'display-fill-column-indicator-mode)
 (add-hook 'prog-mode-hook 'display-line-numbers-mode)
 
 
@@ -99,16 +99,7 @@
 (with-eval-after-load 'flycheck
   (define-key flycheck-mode-map (kbd "M-n") 'flycheck-next-error)
   (define-key flycheck-mode-map (kbd "M-p") 'flycheck-previous-error))
-;; (add-hook 'web-mode-hook (lambda ()
-;;                            (when (and (stringp buffer-file-name)
-;;                                       (or (string-match "\\.jsx\\'" buffer-file-name)))
-;;                              (flymake-eslint-enable))))
-(with-eval-after-load 'rjsx-mode
-  (define-key rjsx-mode-map "<" nil)
-  (define-key rjsx-mode-map (kbd "C-d") nil)
-  (define-key rjsx-mode-map ">" nil)
-  ;; (add-hook 'rjsx-mode-hook (lambda () (flymake-eslint-enable)))
-  )
+
 
 
 (if (fboundp 'global-undo-tree-mode)
@@ -128,12 +119,64 @@
 
 
 
+(with-eval-after-load 'rjsx-mode
+  (define-key rjsx-mode-map "<" nil)
+  (define-key rjsx-mode-map (kbd "C-d") nil)
+  (define-key rjsx-mode-map ">" nil))
+
 (with-eval-after-load 'web-mode
   (add-to-list 'web-mode-indentation-params '("lineup-calls" . nil)))
 
-;; (add-to-list 'auto-mode-alist '("\\.jsx\\'" . web-mode))
+(add-to-list 'auto-mode-alist '("\\.jsx\\'" . web-mode))
+(add-to-list 'auto-mode-alist '("\\.tsx\\'" . web-mode))
 ;; (add-to-list 'auto-mode-alist '("\\.tsx\\'" . typescript-mode))
-(add-to-list 'auto-mode-alist '("\\.tsx\\'" . rjsx-mode))
+;; (add-to-list 'auto-mode-alist '("\\.tsx\\'" . rjsx-mode))
+
+(defun update-node-modules-path ()
+  "Hook to add/remove node_modules/.bin to 'exec-path."
+  (let ((project (project-current)))
+    (when (eq 'marker (car project))
+      (let ((project-type (cadr project))
+            (project-root (file-name-as-directory (caddr project))))
+        (when (eq 'npm project-type)
+          (make-local-variable 'node-modules-path)
+          (make-local-variable 'exec-path)
+          (setq node-modules-path (concat project-root "node_modules/.bin"))
+          (message "Adding %s to local exec-path" node-modules-path)
+          (add-to-list 'exec-path node-modules-path))))))
+(add-hook 'js-mode-hook 'update-node-modules-path)
+(add-hook 'web-mode-hook 'update-node-modules-path)
+(add-hook 'typescript-mode-hook 'update-node-modules-path)
+
+
+
+;; (add-hook 'js-mode-hook
+;;           (lambda ()
+;;             (if (and (project-current)
+;;                      (stringp buffer-file-name)
+;;                      (or (string-match "\\.js\\'" buffer-file-name)))
+;;                 (lsp-deferred))))
+;; (add-hook 'rjsx-mode-hook
+;;           (lambda ()
+;;             (set (make-local-variable 'lsp-enable-indentation) nil)
+;;             (lsp-deferred)))
+(add-hook 'typescript-mode-hook #'lsp-deferred)
+(add-hook 'web-mode-hook
+          (lambda ()
+            (set (make-local-variable 'lsp-enable-indentation) nil)
+            (lsp-deferred)))
+
+;; (add-hook 'js-mode-hook
+;;           (lambda ()
+;;             (if (and (project-current)
+;;                      (stringp buffer-file-name)
+;;                      (or (string-match "\\.jsx\\'" buffer-file-name)))
+;;                 (flymake-eslint-enable))))
+;; (add-hook 'rjsx-mode-hook (lambda () (flymake-eslint-enable)))
+;; (add-hook 'web-mode-hook (lambda ()
+;;                            (when (and (stringp buffer-file-name)
+;;                                       (or (string-match "\\.jsx\\'" buffer-file-name)))
+;;                              (flymake-eslint-enable))))
 
 
 
@@ -160,6 +203,7 @@
 (with-eval-after-load 'rust-mode
   (define-key rust-mode-map (kbd "C-c C-c") 'rust-check)
   (define-key rust-mode-map (kbd "C-c C-k") 'rust-compile)
+  (define-key rust-mode-map (kbd "C-c f") 'rust-format-buffer)
   (add-hook 'rust-mode-hook #'lsp-deferred))
 
 
@@ -224,6 +268,7 @@
     (concat common-parent-directory res)))
 
 
+
 (if (fboundp 'ivy-mode)
     (ivy-mode 1))
 (if (fboundp 'counsel-M-x)
@@ -258,47 +303,17 @@
 
 
 
-(defun update-node-modules-path ()
-  "Hook to add/remove node_modules/.bin to 'exec-path."
-  (let ((project (project-current)))
-    (when (eq 'marker (car project))
-      (let ((project-type (cadr project))
-            (project-root (file-name-as-directory (caddr project))))
-        (when (eq 'npm project-type)
-          (make-local-variable 'node-modules-path)
-          (make-local-variable 'exec-path)
-          (setq node-modules-path (concat project-root "node_modules/.bin"))
-          (message "Adding %s to local exec-path" node-modules-path)
-          (add-to-list 'exec-path node-modules-path))))))
-(add-hook 'js-mode-hook
-          (lambda ()
-            (cond ((and (project-current)
-                        (stringp buffer-file-name)
-                        (or (string-match "\\.js\\'" buffer-file-name)))
-                   (lsp-deferred))
-                  ((and (project-current)
-                        (stringp buffer-file-name)
-                        (or (string-match "\\.jsx\\'" buffer-file-name)))
-                   (flymake-eslint-enable)))))
-(add-hook 'js-mode-hook 'update-node-modules-path)
-(add-hook 'web-mode-hook 'update-node-modules-path)
-(add-hook 'web-mode-hook #'lsp-deferred)
-(add-hook 'typescript-mode-hook #'lsp-deferred)
-(add-hook 'typescript-mode-hook 'update-node-modules-path)
-(add-hook 'rjsx-mode-hook (lambda ()
-                            (set (make-local-variable 'lsp-enable-indentation) nil)
-                            (lsp-deferred)))
-
-
-
 (global-set-key (kbd "<f5>") 'recompile)
-;; (add-hook 'compilation-filter-hook
-;;           (lambda ()
-;;             (ansi-color-apply-on-region compilation-filter-start (point))))
-;; (add-hook 'typescript-mode-hook
-;;           (lambda ()
-;;             (when (string-equal "npm" (projectile-project-type))
-;;               (set (make-local-variable 'compile-command) "npm run build "))))
+(add-hook 'compilation-filter-hook
+          (lambda ()
+            (ansi-color-apply-on-region compilation-filter-start (point))))
+(add-hook 'web-mode-hook
+          (lambda ()
+            (when (and (project-current)
+                       (string-equal "npm" (cadr (project-current))))
+              (set (make-local-variable 'compile-command)
+                   (concat "npx webpack --config "
+                           (expand-file-name "webpack.config.js" (caddr (project-current))))))))
 
 
 
@@ -347,6 +362,9 @@
  '(blink-cursor-mode nil)
  '(column-number-mode t)
  '(compilation-ask-about-save nil)
+ '(compilation-error-regexp-alist
+   '(absoft ada aix ant bash borland python-tracebacks-and-caml cmake cmake-info comma cucumber msft edg-1 edg-2 epc ftnchek gradle-kotlin iar ibm irix java jikes-file maven jikes-line clang-include gcc-include ruby-Test::Unit gmake gnu lcc makepp mips-1 mips-2 omake oracle perl php rxp sparc-pascal-file sparc-pascal-line sparc-pascal-example sun sun-ada watcom 4bsd gcov-file gcov-header gcov-nomark gcov-called-line gcov-never-called perl--Pod::Checker perl--Test perl--Test2 perl--Test::Harness weblint guile-file guile-line
+            ("ERROR in \\(.*\\)(\\([0-9]+\\),\\([0-9]+\\))" 1 2 3)))
  '(compilation-message-face 'default)
  '(confirm-kill-processes nil)
  '(create-lockfiles nil)
@@ -364,12 +382,14 @@
  '(highlight-thing-delay-seconds 0.0)
  '(indent-tabs-mode nil)
  '(inhibit-startup-screen t)
+ '(initial-frame-alist '((vertical-scroll-bars) (width . 90)))
  '(ivy-magic-tilde nil)
  '(ivy-sort-functions-alist
    '((read-file-name-internal . file-newer-than-file-p)
      (t . ivy-string<)))
  '(js-indent-level 4)
  '(js-switch-indent-offset 4)
+ '(js2-mode-show-strict-warnings nil)
  '(js2-strict-missing-semi-warning nil)
  '(lsp-enable-snippet nil)
  '(lsp-headerline-breadcrumb-enable nil)
@@ -396,7 +416,7 @@
    '(("gnu" . "https://elpa.gnu.org/packages/")
      ("melpa" . "https://melpa.org/packages/")))
  '(package-selected-packages
-   '(rjsx-mode flycheck rust-mode flymake-eslint pug-mode go-mode yasnippet doom-themes company restclient color-theme-sanityinc-solarized color-theme-sanityinc-tomorrow modus-themes solarized-theme highlight-thing slime web-mode smex typescript-mode counsel undo-tree magit lsp-mode))
+   '(tide rjsx-mode flycheck rust-mode flymake-eslint pug-mode go-mode yasnippet doom-themes company restclient color-theme-sanityinc-solarized color-theme-sanityinc-tomorrow modus-themes solarized-theme highlight-thing slime web-mode smex typescript-mode counsel undo-tree magit lsp-mode))
  '(project-read-file-name-function 'project--read-file-cpd-relative-2)
  '(ring-bell-function 'ignore)
  '(scroll-bar-mode nil)
@@ -428,7 +448,7 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:family "Consolas" :foundry "outline" :slant normal :weight normal :height 102 :width normal))))
+ '(default ((t (:family "Source Code Pro" :foundry "outline" :slant normal :weight normal :height 102 :width normal))))
  '(fixed-pitch ((t (:inherit default))))
  '(rustic-compilation-column ((t (:inherit compilation-column-number))))
  '(rustic-compilation-error ((t (:inherit compilation-error))))
