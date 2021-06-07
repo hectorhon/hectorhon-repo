@@ -245,7 +245,8 @@
     ;; Fix .gitignore in subdirectories being ignored by emacs vc
     (let* ((default-directory dir)
            (git-output (shell-command-to-string "git ls-files -z --others --ignored --exclude-standard --directory")))
-      (butlast (split-string git-output "\0")))))
+      (append (butlast (split-string git-output "\0"))
+              (list "vendor")))))
 (global-set-key (kbd "C-c p f") 'project-find-file)
 (global-set-key (kbd "C-c p g") 'project-find-regexp)
 (defun project--read-file-cpd-relative-2 (prompt all-files &optional predicate hist default)
@@ -313,7 +314,8 @@
                        (string-equal "npm" (cadr (project-current))))
               (set (make-local-variable 'compile-command)
                    (concat "npx webpack --config "
-                           (expand-file-name "webpack.config.js" (caddr (project-current))))))))
+                           (expand-file-name "webpack.config.js" (caddr (project-current)))
+                           " --no-color")))))
 
 
 
@@ -374,7 +376,7 @@
  '(global-auto-revert-mode t)
  '(grep-command "grep  -IirnH ")
  '(grep-find-ignored-directories
-   '("SCCS" "RCS" "CVS" "MCVS" ".src" ".svn" ".git" ".hg" ".bzr" "_MTN" "_darcs" "{arch}" "node_modules" "coverage" ".log" "build"))
+   '("SCCS" "RCS" "CVS" "MCVS" ".src" ".svn" ".git" ".hg" ".bzr" "_MTN" "_darcs" "{arch}" "node_modules" "coverage" ".log" "build" "vendor"))
  '(grep-find-ignored-files
    '(".#*" "*.o" "*~" "*.bin" "*.lbin" "*.so" "*.a" "*.ln" "*.blg" "*.bbl" "*.elc" "*.lof" "*.glo" "*.idx" "*.lot" "*.fmt" "*.tfm" "*.class" "*.fas" "*.lib" "*.mem" "*.x86f" "*.sparcf" "*.dfsl" "*.pfsl" "*.d64fsl" "*.p64fsl" "*.lx64fsl" "*.lx32fsl" "*.dx64fsl" "*.dx32fsl" "*.fx64fsl" "*.fx32fsl" "*.sx64fsl" "*.sx32fsl" "*.wx64fsl" "*.wx32fsl" "*.fasl" "*.ufsl" "*.fsl" "*.dxl" "*.lo" "*.la" "*.gmo" "*.mo" "*.toc" "*.aux" "*.cp" "*.fn" "*.ky" "*.pg" "*.tp" "*.vr" "*.cps" "*.fns" "*.kys" "*.pgs" "*.tps" "*.vrs" "*.pyc" "*.pyo" "package-lock.json"))
  '(grep-use-null-device nil)
