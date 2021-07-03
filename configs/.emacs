@@ -152,7 +152,6 @@
   (define-key rust-mode-map (kbd "C-c C-c") 'rust-check)
   (define-key rust-mode-map (kbd "C-c C-k") 'rust-compile)
   (define-key rust-mode-map (kbd "C-c f") 'rust-format-buffer))
-(add-hook 'rust-mode-hook 'company-mode)
 
 
 
@@ -180,13 +179,40 @@
 
 
 (require 'eglot)
+
+;; Remove eglot from mode-line
+(setq mode-line-misc-info (cdr mode-line-misc-info))
+
+(defclass eglot-tsserver (eglot-lsp-server) ()
+  :documentation "TypeScript language server.")
+
+;; Fix for ^M character from typescript language server when adding import lines
+(cl-defmethod eglot-execute-command
+  ((server eglot-tsserver) (command (eql _typescript\.applyWorkspaceEdit)) arguments)
+  (let* ((argument (aref arguments 0))
+         (documentchange (plist-get argument :documentChanges))
+         (textdocument (aref documentchange 0))
+         (edits (plist-get textdocument :edits))
+         (edit (aref edits 0))
+         (newtext (plist-get edit :newText)))
+    (plist-put edit :newText
+               (replace-regexp-in-string "$" "" newtext))
+    (jsonrpc-request server :workspace/executeCommand
+                     `(:command ,(format "%s" command) :arguments ,arguments))))
+
+(define-key eglot-mode-map (kbd "C-.") 'eglot-code-actions)
 (add-to-list 'eglot-server-programs
-             '(web-mode . ("typescript-language-server" "--stdio")))
+             '((typescript-mode web-mode)
+               . (eglot-tsserver "typescript-language-server" "--stdio")))
 (add-to-list 'eglot-server-programs
              '(rust-mode . ("rust-analyzer")))
 (add-hook 'web-mode-hook 'eglot-ensure)
 (add-hook 'typescript-mode-hook 'eglot-ensure)
 (add-hook 'rust-mode-hook 'eglot-ensure)
+
+;; Enable company mode for eglot
+(add-hook 'eglot-managed-mode-hook 'company-mode)
+(define-key eglot-mode-map (kbd "C-M-i") 'company-complete)
 
 
 
@@ -308,6 +334,8 @@
  '(create-lockfiles nil)
  '(dired-listing-switches "-alX")
  '(display-time-mode t)
+ '(eglot-confirm-server-initiated-edits nil)
+ '(eldoc-echo-area-use-multiline-p nil)
  '(gc-cons-threshold 100000000)
  '(global-auto-revert-mode t)
  '(grep-command "grep  -IirnH ")
