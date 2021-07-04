@@ -1,6 +1,10 @@
+(eval-when-compile
+  (require 'use-package))
+(require 'bind-key)
+
+
+
 (windmove-default-keybindings)
-
-
 
 (global-set-key [M-down] (quote scroll-up-line))
 (global-set-key [M-up] (quote scroll-down-line))
@@ -14,8 +18,6 @@
                                                (1- (window-hscroll)))))
 (global-set-key (kbd "M-s M-o") 'occur)
 
-
-
 (defun format-buffer ()
   "Indent the entire buffer and deletes all trailing whitespace."
   (interactive)
@@ -24,13 +26,9 @@
   (delete-trailing-whitespace))
 (global-set-key (kbd "C-c f") (quote format-buffer))
 
-
-
 (defadvice yank (after indent-region activate)
   (if (derived-mode-p 'prog-mode)
       (indent-region (region-beginning) (region-end) nil)))
-
-
 
 (defun copy-buffer-file-name ()
   "Copy the current 'buffer-file-name to the clipboard."
@@ -43,14 +41,10 @@
       (message filename))))
 (global-set-key (kbd "C-c z") (quote copy-buffer-file-name))
 
-
-
 (defun show-popup-yank-menu ()
   (interactive)
   (popup-menu 'yank-menu))
 (global-set-key (kbd "C-c y") (quote show-popup-yank-menu))
-
-
 
 (defvar newline-and-indent t
   "Modify the behavior of the open-*-line functions to cause them to autoindent.")
@@ -77,59 +71,6 @@
 (global-set-key (kbd "C-o") 'open-next-line)
 (global-set-key (kbd "M-o") 'open-previous-line)
 
-
-
-(with-eval-after-load 'hideshow
-  (define-key hs-minor-mode-map (kbd "C-`") 'hs-hide-block)
-  (define-key hs-minor-mode-map (kbd "M-`") 'hs-show-block))
-
-
-
-;; (if (fboundp 'highlight-thing-mode)
-;;     (add-hook 'prog-mode-hook 'highlight-thing-mode))
-;; (add-hook 'prog-mode-hook 'display-fill-column-indicator-mode)
-(add-hook 'prog-mode-hook 'display-line-numbers-mode)
-
-
-
-(with-eval-after-load 'flymake
-  (define-key flymake-mode-map (kbd "M-n") 'flymake-goto-next-error)
-  (define-key flymake-mode-map (kbd "M-p") 'flymake-goto-prev-error))
-
-
-
-(if (fboundp 'global-undo-tree-mode)
-    (global-undo-tree-mode))
-
-
-
-(global-set-key (kbd "C-x g") 'magit-status)
-
-
-
-(advice-add 'js--multi-line-declaration-indentation :around
-            (lambda (orig-fun &rest args) nil))
-(advice-add 'js-find-symbol :around
-            (lambda (orig-fun &rest args)
-              (if (and (boundp 'lsp-mode) lsp-mode)
-                  (xref-find-definitions)
-                (apply orig-fun nil))))
-
-
-
-(with-eval-after-load 'rjsx-mode
-  (define-key rjsx-mode-map "<" nil)
-  (define-key rjsx-mode-map (kbd "C-d") nil)
-  (define-key rjsx-mode-map ">" nil))
-
-(with-eval-after-load 'web-mode
-  (add-to-list 'web-mode-indentation-params '("lineup-calls" . nil)))
-
-(add-to-list 'auto-mode-alist '("\\.jsx\\'" . web-mode))
-(add-to-list 'auto-mode-alist '("\\.tsx\\'" . web-mode))
-;; (add-to-list 'auto-mode-alist '("\\.tsx\\'" . typescript-mode))
-;; (add-to-list 'auto-mode-alist '("\\.tsx\\'" . rjsx-mode))
-
 (defun update-node-modules-path ()
   "Hook to add/remove node_modules/.bin to 'exec-path."
   (let ((project (project-current)))
@@ -142,77 +83,143 @@
           (setq node-modules-path (concat project-root "node_modules/.bin"))
           (message "Adding %s to local exec-path" node-modules-path)
           (add-to-list 'exec-path node-modules-path))))))
-(add-hook 'js-mode-hook 'update-node-modules-path)
-(add-hook 'web-mode-hook 'update-node-modules-path)
-(add-hook 'typescript-mode-hook 'update-node-modules-path)
 
 
 
-(with-eval-after-load 'rust-mode
-  (define-key rust-mode-map (kbd "C-c C-c") 'rust-check)
-  (define-key rust-mode-map (kbd "C-c C-k") 'rust-compile)
-  (define-key rust-mode-map (kbd "C-c f") 'rust-format-buffer))
+;;; Built in packages
+
+(use-package hideshow
+  :bind (:map hs-minor-mode-map
+              ("C-`" . hs-hide-block)
+              ("M-`" . hs-show-block)))
+
+(use-package display-line-numbers-mode
+  :hook prog-mode)
+
+;; (use-package display-fill-column-indicator-mode
+;;   :hook prog-mode)
+
+(use-package flymake
+  :bind (:map flymake-mode-map
+              ("M-n" . flymake-goto-next-error)
+              ("M-p" . flymake-goto-prev-error)))
+
+(use-package js
+  :mode "\\.js\\'"
+  :config (progn (advice-add 'js--multi-line-declaration-indentation :around
+                             (lambda (orig-fun &rest args) nil))
+                 (advice-add 'js-find-symbol :around
+                             (lambda (orig-fun &rest args)
+                               (if (and (boundp 'lsp-mode) lsp-mode)
+                                   (xref-find-definitions)
+                                 (apply orig-fun nil))))
+                 (add-hook 'js-mode-hook 'update-node-modules-path)))
 
 
 
-(require 'wgrep)
-(require 'wgrep-helm)
-(require 'helm)
-(require 'helm-config)
-(global-set-key (kbd "C-c h") 'helm-command-prefix)
-(global-unset-key (kbd "C-x c"))
-(global-set-key (kbd "M-x") 'helm-M-x)
-(global-set-key (kbd "C-x C-f") 'helm-find-files)
-(global-set-key (kbd "C-x b") 'helm-mini)
-(setq helm-buffers-fuzzy-matching t
-      helm-recentf-fuzzy-match t)
-(helm-autoresize-mode 1)
-(helm-mode 1)
+;;; MELPA packages
 
-(require 'projectile)
-(define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
-(projectile-mode +1)
+(use-package undo-tree
+  :config (global-undo-tree-mode))
 
-(setq projectile-completion-system 'helm)
-(helm-projectile-on)
+(use-package highlight-thing-mode
+  :hook prog-mode)
 
+(use-package magit
+  :commands magit-status)
 
+;; (use-package rjsx-mode
+;;   :mode "\\.jsx\\'"
+;;   :bind (:map rjsx-mode-map
+;;               ("<" nil)
+;;               ("C-d" nil)
+;;               (">" nil)))
 
-(require 'eglot)
+(use-package web-mode
+  :mode ("\\.jsx\\'" "\\.tsx\\'")
+  :config (progn (add-to-list 'web-mode-indentation-params '("lineup-calls" . nil))
+                 (add-hook 'web-mode-hook 'update-node-modules-path)))
 
-;; Remove eglot from mode-line
-(setq mode-line-misc-info (cdr mode-line-misc-info))
+(use-package typescript-mode
+  :mode "\\.ts\\'"
+  :config (add-hook 'typescript-mode-hook 'update-node-modules-path))
 
-(defclass eglot-tsserver (eglot-lsp-server) ()
-  :documentation "TypeScript language server.")
+(use-package rust-mode
+  :bind (:map rust-mode-map
+              ("C-c C-c" . rust-check)
+              ("C-c C-k" . rust-compile)
+              ("C-c f" . rust-format-buffer)))
 
-;; Fix for ^M character from typescript language server when adding import lines
-(cl-defmethod eglot-execute-command
-  ((server eglot-tsserver) (command (eql _typescript\.applyWorkspaceEdit)) arguments)
-  (let* ((argument (aref arguments 0))
-         (documentchange (plist-get argument :documentChanges))
-         (textdocument (aref documentchange 0))
-         (edits (plist-get textdocument :edits))
-         (edit (aref edits 0))
-         (newtext (plist-get edit :newText)))
-    (plist-put edit :newText
-               (replace-regexp-in-string "$" "" newtext))
-    (jsonrpc-request server :workspace/executeCommand
-                     `(:command ,(format "%s" command) :arguments ,arguments))))
+(use-package wgrep)
 
-(define-key eglot-mode-map (kbd "C-.") 'eglot-code-actions)
-(add-to-list 'eglot-server-programs
-             '((typescript-mode web-mode)
-               . (eglot-tsserver "typescript-language-server" "--stdio")))
-(add-to-list 'eglot-server-programs
-             '(rust-mode . ("rust-analyzer")))
-(add-hook 'web-mode-hook 'eglot-ensure)
-(add-hook 'typescript-mode-hook 'eglot-ensure)
-(add-hook 'rust-mode-hook 'eglot-ensure)
+(use-package wgrep-helm)
 
-;; Enable company mode for eglot
-(add-hook 'eglot-managed-mode-hook 'company-mode)
-(define-key eglot-mode-map (kbd "C-M-i") 'company-complete)
+(use-package helm
+  :config (progn
+            (global-set-key (kbd "C-c h") 'helm-command-prefix)
+            (global-unset-key (kbd "C-x c"))
+            (setq helm-split-window-in-side-p           t ; open helm buffer inside current window, not occupy whole other window
+                  helm-move-to-line-cycle-in-source     t ; move to end or beginning of source when reaching top or bottom of source.
+                  helm-ff-search-library-in-sexp        t ; search for library in `require' and `declare-function' sexp.
+                  helm-scroll-amount                    8 ; scroll 8 lines other window using M-<next>/M-<prior>
+                  helm-ff-file-name-history-use-recentf t
+                  helm-echo-input-in-header-line t)
+            (global-set-key (kbd "M-x") 'helm-M-x)
+            (global-set-key (kbd "C-x C-f") 'helm-find-files)
+            (global-set-key (kbd "C-x b") 'helm-mini)
+            (setq helm-buffers-fuzzy-matching t
+                  helm-recentf-fuzzy-match t)
+            (helm-autoresize-mode 1)
+            (helm-mode 1)))
+
+(use-package helm-config
+  :after helm)
+
+(use-package projectile
+  :init (progn (projectile-mode +1)
+               (setq projectile-completion-system 'helm))
+  :bind (:map projectile-mode-map
+              ("C-c p" . projectile-command-map)))
+
+(use-package helm-projectile
+  :after (helm projectile)
+  :config (helm-projectile-on))
+
+(use-package eglot
+  :init (progn (add-hook 'web-mode-hook 'eglot-ensure)
+               (add-hook 'typescript-mode-hook 'eglot-ensure)
+               (add-hook 'rust-mode-hook 'eglot-ensure))
+  :bind (:map eglot-mode-map
+              ("C-." . 'eglot-code-actions))
+  :config (progn
+            ;; Remove eglot from mode-line
+            (setq mode-line-misc-info (cdr mode-line-misc-info))
+
+            ;; Fix for ^M character from typescript language server when adding import lines
+            (defclass eglot-tsserver (eglot-lsp-server) ()
+              :documentation "TypeScript language server.")
+            (cl-defmethod eglot-execute-command
+              ((server eglot-tsserver) (command (eql _typescript\.applyWorkspaceEdit)) arguments)
+              (let* ((argument (aref arguments 0))
+                     (documentchange (plist-get argument :documentChanges))
+                     (textdocument (aref documentchange 0))
+                     (edits (plist-get textdocument :edits))
+                     (edit (aref edits 0))
+                     (newtext (plist-get edit :newText)))
+                (plist-put edit :newText (replace-regexp-in-string "$" "" newtext))
+                (jsonrpc-request server :workspace/executeCommand
+                                 `(:command ,(format "%s" command) :arguments ,arguments))))
+
+            ;; Update eglot-server-programs
+            (add-to-list 'eglot-server-programs
+                         '((typescript-mode web-mode)
+                           . (eglot-tsserver "typescript-language-server" "--stdio")))
+            (add-to-list 'eglot-server-programs
+                         '(rust-mode . ("rust-analyzer")))))
+
+(use-package company-mode
+  :hook eglot-managed-mode
+  :config (define-key eglot-mode-map (kbd "C-M-i") 'company-complete))
 
 
 
@@ -372,7 +379,7 @@
    '(("gnu" . "https://elpa.gnu.org/packages/")
      ("melpa" . "https://melpa.org/packages/")))
  '(package-selected-packages
-   '(wgrep-helm helm-projectile projectile helm eglot wgrep spacemacs-theme rjsx-mode rust-mode pug-mode yasnippet doom-themes company restclient color-theme-sanityinc-solarized color-theme-sanityinc-tomorrow modus-themes solarized-theme highlight-thing slime web-mode typescript-mode undo-tree magit))
+   '(eglot use-package wgrep-helm helm-projectile projectile helm wgrep spacemacs-theme rjsx-mode rust-mode pug-mode yasnippet doom-themes company restclient color-theme-sanityinc-solarized color-theme-sanityinc-tomorrow modus-themes solarized-theme highlight-thing slime web-mode typescript-mode undo-tree magit))
  '(project-read-file-name-function 'project--read-file-cpd-relative-2)
  '(projectile-globally-ignored-directories
    '(".idea" ".vscode" ".ensime_cache" ".eunit" ".git" ".hg" ".fslckout" "_FOSSIL_" ".bzr" "_darcs" ".tox" ".svn" ".stack-work" ".ccls-cache" ".cache" ".clangd" "node_modules" "target"))
