@@ -17,6 +17,7 @@
                            (set-window-hscroll (selected-window)
                                                (1- (window-hscroll)))))
 (global-set-key (kbd "M-s M-o") 'occur)
+(global-set-key (kbd "<f7>") 'toggle-truncate-lines)
 
 (defun format-buffer ()
   "Indent the entire buffer and deletes all trailing whitespace."
@@ -100,6 +101,7 @@
 ;;   :hook prog-mode)
 
 (use-package flymake
+  :diminish flymake-mode
   :bind (:map flymake-mode-map
               ("M-n" . flymake-goto-next-error)
               ("M-p" . flymake-goto-prev-error)))
@@ -112,18 +114,18 @@
                              (lambda (orig-fun &rest args)
                                (if (and (boundp 'lsp-mode) lsp-mode)
                                    (xref-find-definitions)
-                                 (apply orig-fun nil))))
-                 (add-hook 'js-mode-hook 'update-node-modules-path)))
+                                 (apply orig-fun nil))))))
 
 
 
 ;;; MELPA packages
 
 (use-package undo-tree
+  :diminish undo-tree-mode
   :config (global-undo-tree-mode))
 
-(use-package highlight-thing-mode
-  :hook prog-mode)
+;; (use-package highlight-thing-mode
+;;   :hook prog-mode)
 
 (use-package magit
   :commands magit-status)
@@ -137,12 +139,10 @@
 
 (use-package web-mode
   :mode ("\\.jsx\\'" "\\.tsx\\'")
-  :config (progn (add-to-list 'web-mode-indentation-params '("lineup-calls" . nil))
-                 (add-hook 'web-mode-hook 'update-node-modules-path)))
+  :config (progn (add-to-list 'web-mode-indentation-params '("lineup-calls" . nil))))
 
 (use-package typescript-mode
-  :mode "\\.ts\\'"
-  :config (add-hook 'typescript-mode-hook 'update-node-modules-path))
+  :mode "\\.ts\\'")
 
 (use-package rust-mode
   :bind (:map rust-mode-map
@@ -155,6 +155,7 @@
 (use-package wgrep-helm)
 
 (use-package helm
+  :diminish helm-mode
   :config (progn
             (global-set-key (kbd "C-c h") 'helm-command-prefix)
             (global-unset-key (kbd "C-x c"))
@@ -176,6 +177,7 @@
   :after helm)
 
 (use-package projectile
+  :diminish projectile-mode
   :init (progn (projectile-mode +1)
                (setq projectile-completion-system 'helm))
   :bind (:map projectile-mode-map
@@ -190,7 +192,9 @@
                (add-hook 'typescript-mode-hook 'eglot-ensure)
                (add-hook 'rust-mode-hook 'eglot-ensure))
   :bind (:map eglot-mode-map
-              ("C-." . 'eglot-code-actions))
+              ("C-." . 'eglot-code-actions)
+              ("C-c r r" . 'eglot-rename)
+              ("C-c C-f" . 'eglot-format-buffer))
   :config (progn
             ;; Remove eglot from mode-line
             (setq mode-line-misc-info (cdr mode-line-misc-info))
@@ -217,9 +221,11 @@
             (add-to-list 'eglot-server-programs
                          '(rust-mode . ("rust-analyzer")))))
 
-(use-package company-mode
-  :hook eglot-managed-mode
-  :config (define-key eglot-mode-map (kbd "C-M-i") 'company-complete))
+(use-package company
+  :diminish company-mode
+  :hook (eglot-managed-mode . company-mode)
+  :bind (:map eglot-mode-map
+              ("C-M-i" . 'company-complete)))
 
 
 
@@ -333,17 +339,16 @@
  '(blink-cursor-mode nil)
  '(column-number-mode t)
  '(compilation-ask-about-save nil)
- '(compilation-error-regexp-alist
-   '(absoft ada aix ant bash borland python-tracebacks-and-caml cmake cmake-info comma cucumber msft edg-1 edg-2 epc ftnchek gradle-kotlin iar ibm irix java jikes-file maven jikes-line clang-include gcc-include ruby-Test::Unit gmake gnu lcc makepp mips-1 mips-2 omake oracle perl php rxp sparc-pascal-file sparc-pascal-line sparc-pascal-example sun sun-ada watcom 4bsd gcov-file gcov-header gcov-nomark gcov-called-line gcov-never-called perl--Pod::Checker perl--Test perl--Test2 perl--Test::Harness weblint guile-file guile-line
-            ("ERROR in \\(.*\\)(\\([0-9]+\\),\\([0-9]+\\))" 1 2 3)))
  '(compilation-message-face 'default)
  '(confirm-kill-processes nil)
  '(create-lockfiles nil)
+ '(custom-enabled-themes '(leuven))
+ '(custom-safe-themes
+   '("aba75724c5d4d0ec0de949694bce5ce6416c132bb031d4e7ac1c4f2dbdd3d580" default))
  '(dired-listing-switches "-alX")
  '(display-time-mode t)
  '(eglot-confirm-server-initiated-edits nil)
  '(eldoc-echo-area-use-multiline-p nil)
- '(gc-cons-threshold 100000000)
  '(global-auto-revert-mode t)
  '(grep-command "grep  -IirnH ")
  '(grep-find-ignored-directories
@@ -379,15 +384,13 @@
    '(("gnu" . "https://elpa.gnu.org/packages/")
      ("melpa" . "https://melpa.org/packages/")))
  '(package-selected-packages
-   '(eglot use-package wgrep-helm helm-projectile projectile helm wgrep spacemacs-theme rjsx-mode rust-mode pug-mode yasnippet doom-themes company restclient color-theme-sanityinc-solarized color-theme-sanityinc-tomorrow modus-themes solarized-theme highlight-thing slime web-mode typescript-mode undo-tree magit))
+   '(diminish doom-themes leuven-theme eglot use-package wgrep-helm helm-projectile projectile helm wgrep spacemacs-theme rjsx-mode rust-mode pug-mode yasnippet company restclient modus-themes solarized-theme highlight-thing slime web-mode typescript-mode undo-tree magit))
  '(project-read-file-name-function 'project--read-file-cpd-relative-2)
  '(projectile-globally-ignored-directories
-   '(".idea" ".vscode" ".ensime_cache" ".eunit" ".git" ".hg" ".fslckout" "_FOSSIL_" ".bzr" "_darcs" ".tox" ".svn" ".stack-work" ".ccls-cache" ".cache" ".clangd" "node_modules" "target"))
- '(projectile-project-root-files-top-down-recurring
-   '(".svn" "CVS" "Makefile" "package.json" "Cargo.toml" ".git"))
- '(projectile-project-root-functions
-   '(projectile-root-local projectile-root-top-down projectile-root-top-down-recurring))
- '(projectile-sort-order 'recentf)
+   '(".idea" ".vscode" ".ensime_cache" ".eunit" ".git" ".hg" ".fslckout" "_FOSSIL_" ".bzr" "_darcs" ".tox" ".svn" ".stack-work" ".ccls-cache" ".cache" ".clangd" "node_modules" "target" "build" "vendor"))
+ '(projectile-project-root-files-bottom-up
+   '(".projectile" "package.json" "Cargo.toml" ".git" ".hg" ".fslckout" "_FOSSIL_" ".bzr" "_darcs"))
+ '(projectile-sort-order 'recently-active)
  '(ring-bell-function 'ignore)
  '(scroll-bar-mode nil)
  '(sgml-basic-offset 4)
@@ -395,6 +398,7 @@
  '(show-paren-mode t)
  '(slime-compile-file-options '(:fasl-directory "/home/hectorhon/tmp/fasl/"))
  '(slime-load-failed-fasl 'never)
+ '(spacemacs-theme-underline-parens nil)
  '(tab-width 4)
  '(temporary-file-directory "c:/Users/hectorhon/AppData/Local/Temp/")
  '(tool-bar-mode nil)
@@ -426,3 +430,5 @@
 (setenv "PATH" (concat
                 "C:\\Program Files\\Git\\usr\\bin" ";"
                 (getenv "PATH")))
+
+(add-to-list 'exec-path "C:\\Users\\hectorhon\\AppData\\Roaming\\npm")
