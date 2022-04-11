@@ -56,19 +56,39 @@
 (global-set-key (kbd "C-o") 'open-next-line)
 (global-set-key (kbd "M-o") 'open-previous-line)
 
+(helm-mode 1)
+(global-set-key (kbd "M-x") 'helm-M-x)
+(global-set-key (kbd "C-x C-f") 'helm-find-files)
+
+(add-to-list 'auto-mode-alist '("\\.rego\\'" . text-mode))
+
+(require 'restclient)
+(add-to-list 'auto-mode-alist '("\\.restclient\\'" . restclient-mode))
+
 (require 'undo-tree)
 (global-undo-tree-mode)
 
+(require 'projectile)
+(define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
+(projectile-mode +1)
+
+(require 'helm-projectile)
+(helm-projectile-on)
+
 (require 'eglot)
+
+(require 'flymake)
+(define-key flymake-mode-map (kbd "M-p") 'flymake-goto-prev-error)
+(define-key flymake-mode-map (kbd "M-n") 'flymake-goto-next-error)
 
 (add-hook 'python-mode-hook
           (lambda ()
             (let ((root (locate-dominating-file "." "venv")))
               (when root
-                (message "Activating pyvenv %s %s" root "venv")
+                (message "Activating pyvenv %s%s" root "venv")
 		(pyvenv-mode)
                 (pyvenv-activate (concat root "venv"))
-                (when (project-current)
+                (when (projectile-project-root)
 		  (eglot-ensure))))))
 
 (custom-set-variables
@@ -78,12 +98,15 @@
  ;; If there is more than one, they won't work right.
  '(auto-save-default nil)
  '(blink-cursor-mode nil)
+ '(column-number-mode t)
  '(create-lockfiles nil)
  '(custom-enabled-themes '(modus-operandi))
- '(fido-vertical-mode t)
+ '(indent-tabs-mode nil)
  '(inhibit-startup-screen t)
  '(make-backup-files nil)
- '(package-selected-packages '(undo-tree eglot magit pyvenv))
+ '(package-selected-packages
+   '(web-mode helm helm-projectile projectile auto-highlight-symbol restclient undo-tree eglot magit pyvenv))
+ '(scroll-bar-mode nil)
  '(tool-bar-mode nil)
  '(undo-tree-auto-save-history nil))
 (custom-set-faces
