@@ -1,3 +1,6 @@
+;; (load-theme 'modus-operandi t)
+(load-theme 'leuven t)
+
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
 (package-initialize)
@@ -6,6 +9,21 @@
 
 (global-set-key [M-down] (quote scroll-up-line))
 (global-set-key [M-up] (quote scroll-down-line))
+(global-set-key (kbd "C-c >") 'indent-rigidly-right)
+(global-set-key (kbd "C-c <") 'indent-rigidly-left)
+
+(require 'org)
+;; Make windmove work in Org mode:
+(add-hook 'org-shiftup-final-hook 'windmove-up)
+(add-hook 'org-shiftleft-final-hook 'windmove-left)
+(add-hook 'org-shiftdown-final-hook 'windmove-down)
+(add-hook 'org-shiftright-final-hook 'windmove-right)
+(define-key org-mode-map (kbd "<M-down>") 'scroll-up-line)
+(define-key org-mode-map (kbd "<M-up>") 'scroll-down-line)
+(define-key org-mode-map (kbd "C-c >") 'indent-rigidly-right)
+(define-key org-mode-map (kbd "C-c <") 'indent-rigidly-left)
+(define-key global-map "\C-ca" 'org-agenda)
+(define-key global-map "\C-cc" 'org-capture)
 
 (defun format-buffer ()
   "Indent the entire buffer and deletes all trailing whitespace."
@@ -59,8 +77,16 @@
 (helm-mode 1)
 (global-set-key (kbd "M-x") 'helm-M-x)
 (global-set-key (kbd "C-x C-f") 'helm-find-files)
+(global-set-key (kbd "C-x B") 'helm-bookmarks)
 
-(add-to-list 'auto-mode-alist '("\\.rego\\'" . text-mode))
+;; (require 'highlight-thing)
+;; (add-hook 'prog-mode-hook 'highlight-thing-mode)
+;; (add-hook 'restclient-mode 'highlight-thing-mode)
+
+;; (require 'rego-mode)
+;; (add-hook 'rego-mode-hook 'highlight-thing-mode)
+
+(require 'magit)
 
 (require 'restclient)
 (add-to-list 'auto-mode-alist '("\\.restclient\\'" . restclient-mode))
@@ -80,6 +106,7 @@
 (require 'flymake)
 (define-key flymake-mode-map (kbd "M-p") 'flymake-goto-prev-error)
 (define-key flymake-mode-map (kbd "M-n") 'flymake-goto-next-error)
+(define-key flymake-mode-map (kbd "C-c !") 'flymake-show-buffer-diagnostics)
 
 (add-hook 'python-mode-hook
           (lambda ()
@@ -90,6 +117,10 @@
                 (pyvenv-activate (concat root "venv"))
                 (when (projectile-project-root)
 		  (eglot-ensure))))))
+(add-hook 'go-mode-hook
+          (lambda ()
+            (when (projectile-project-root)
+              (eglot-ensure))))
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -100,13 +131,27 @@
  '(blink-cursor-mode nil)
  '(column-number-mode t)
  '(create-lockfiles nil)
- '(custom-enabled-themes '(modus-operandi))
+ '(global-auto-revert-mode t)
+ '(grep-find-ignored-directories
+   '("SCCS" "RCS" "CVS" "MCVS" ".src" ".svn" ".git" ".hg" ".bzr" "_MTN" "_darcs" "{arch}" "venv" "node_modules"))
  '(indent-tabs-mode nil)
  '(inhibit-startup-screen t)
+ '(magit-status-sections-hook
+   '(magit-insert-status-headers magit-insert-merge-log magit-insert-rebase-sequence magit-insert-am-sequence magit-insert-sequencer-sequence magit-insert-bisect-output magit-insert-bisect-rest magit-insert-bisect-log magit-insert-untracked-files magit-insert-unstaged-changes magit-insert-staged-changes magit-insert-stashes magit-insert-unpushed-to-pushremote magit-insert-unpushed-to-upstream magit-insert-recent-commits magit-insert-unpulled-from-pushremote magit-insert-unpulled-from-upstream))
  '(make-backup-files nil)
+ '(org-agenda-files '("~/datetree.org"))
+ '(org-capture-templates
+   '(("d" "datetree" entry
+      (file+olp+datetree "~/datetree.org")
+      "* %i%?" :jump-to-captured t :tree-type week)))
  '(package-selected-packages
-   '(web-mode helm helm-projectile projectile auto-highlight-symbol restclient undo-tree eglot magit pyvenv))
+   '(yaml-mode dockerfile-mode markdown-mode go-mode rego-mode highlight-thing leuven-theme python-black restclient modus-themes helm-projectile undo-tree eglot helm magit projectile pyvenv))
+ '(projectile-project-root-files-bottom-up
+   '("requirements.txt" ".projectile" ".git" ".hg" ".fslckout" "_FOSSIL_" ".bzr" "_darcs" ".pijul"))
+ '(rego-format-at-save nil)
+ '(ring-bell-function 'ignore)
  '(scroll-bar-mode nil)
+ '(show-paren-mode t)
  '(tool-bar-mode nil)
  '(undo-tree-auto-save-history nil))
 (custom-set-faces
