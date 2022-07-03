@@ -79,6 +79,13 @@
 (global-set-key (kbd "C-x C-f") 'helm-find-files)
 (global-set-key (kbd "C-x B") 'helm-bookmarks)
 
+(defun python-project (dir)
+  (let ((p (locate-dominating-file dir "venv")))
+    (if p (cons 'python-venv p) nil)))
+(cl-defmethod project-root ((project (head python-venv)))
+  (cdr project))
+(add-hook 'project-find-functions #'python-project)
+
 ;; (require 'highlight-thing)
 ;; (add-hook 'prog-mode-hook 'highlight-thing-mode)
 ;; (add-hook 'restclient-mode 'highlight-thing-mode)
@@ -88,8 +95,8 @@
 
 (require 'magit)
 
-(require 'restclient)
-(add-to-list 'auto-mode-alist '("\\.restclient\\'" . restclient-mode))
+;; (require 'restclient)
+;; (add-to-list 'auto-mode-alist '("\\.restclient\\'" . restclient-mode))
 
 (require 'undo-tree)
 (global-undo-tree-mode)
@@ -102,6 +109,7 @@
 (helm-projectile-on)
 
 (require 'eglot)
+(define-key eglot-mode-map (kbd "C-.") 'eglot-code-actions)
 
 (require 'flymake)
 (define-key flymake-mode-map (kbd "M-p") 'flymake-goto-prev-error)
@@ -116,11 +124,21 @@
 		(pyvenv-mode)
                 (pyvenv-activate (concat root "venv"))
                 (when (projectile-project-root)
-		  (eglot-ensure))))))
+		  (eglot-ensure)
+                  (company-mode))))))
 (add-hook 'go-mode-hook
           (lambda ()
             (when (projectile-project-root)
               (eglot-ensure))))
+(add-hook 'typescript-mode-hook
+          (lambda ()
+            (when (projectile-project-root)
+              (eglot-ensure)
+              (company-mode))))
+
+(require 'web-mode)
+(add-to-list 'auto-mode-alist '("\\.html\\'" . web-mode))
+(add-to-list 'auto-mode-alist '("\\.tpl\\'" . web-mode))
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -131,9 +149,10 @@
  '(blink-cursor-mode nil)
  '(column-number-mode t)
  '(create-lockfiles nil)
+ '(eglot-confirm-server-initiated-edits nil)
  '(global-auto-revert-mode t)
  '(grep-find-ignored-directories
-   '("SCCS" "RCS" "CVS" "MCVS" ".src" ".svn" ".git" ".hg" ".bzr" "_MTN" "_darcs" "{arch}" "venv" "node_modules"))
+   '("node_modules" ".angular" "venv" "SCCS" "RCS" "CVS" "MCVS" ".src" ".svn" ".git" ".hg" ".bzr" "_MTN" "_darcs" "{arch}"))
  '(indent-tabs-mode nil)
  '(inhibit-startup-screen t)
  '(magit-status-sections-hook
@@ -145,9 +164,9 @@
       (file+olp+datetree "~/datetree.org")
       "* %i%?" :jump-to-captured t :tree-type week)))
  '(package-selected-packages
-   '(yaml-mode dockerfile-mode markdown-mode go-mode rego-mode highlight-thing leuven-theme python-black restclient modus-themes helm-projectile undo-tree eglot helm magit projectile pyvenv))
- '(projectile-project-root-files-bottom-up
-   '("requirements.txt" ".projectile" ".git" ".hg" ".fslckout" "_FOSSIL_" ".bzr" "_darcs" ".pijul"))
+   '(json-mode company web-mode typescript-mode yaml-mode dockerfile-mode markdown-mode go-mode rego-mode highlight-thing leuven-theme python-black restclient modus-themes helm-projectile undo-tree eglot helm magit projectile pyvenv))
+ '(projectile-project-root-functions
+   '(projectile-root-local projectile-root-top-down projectile-root-bottom-up projectile-root-top-down-recurring))
  '(rego-format-at-save nil)
  '(ring-bell-function 'ignore)
  '(scroll-bar-mode nil)
