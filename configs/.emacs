@@ -1,5 +1,7 @@
-;; (load-theme 'modus-operandi t)
-(load-theme 'leuven t)
+
+(load-theme 'modus-operandi t)
+;; (load-theme 'leuven t)
+;; (load-theme 'solarized-light t)
 
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
@@ -86,6 +88,13 @@
   (cdr project))
 (add-hook 'project-find-functions #'python-project)
 
+(defun go-project (dir)
+  (let ((p (locate-dominating-file dir "go.mod")))
+    (if p (cons 'go-gomod p) nil)))
+(cl-defmethod project-root ((project (head go-gomod)))
+  (cdr project))
+(add-hook 'project-find-functions #'go-project)
+
 ;; (require 'highlight-thing)
 ;; (add-hook 'prog-mode-hook 'highlight-thing-mode)
 ;; (add-hook 'restclient-mode 'highlight-thing-mode)
@@ -110,6 +119,7 @@
 
 (require 'eglot)
 (define-key eglot-mode-map (kbd "C-.") 'eglot-code-actions)
+(setf eglot-stay-out-of '(imenu))
 
 (require 'flymake)
 (define-key flymake-mode-map (kbd "M-p") 'flymake-goto-prev-error)
@@ -128,7 +138,7 @@
                   (company-mode))))))
 (add-hook 'go-mode-hook
           (lambda ()
-            (when (projectile-project-root)
+            (when (project-current)
               (eglot-ensure))))
 (add-hook 'typescript-mode-hook
           (lambda ()
@@ -158,19 +168,23 @@
  '(magit-status-sections-hook
    '(magit-insert-status-headers magit-insert-merge-log magit-insert-rebase-sequence magit-insert-am-sequence magit-insert-sequencer-sequence magit-insert-bisect-output magit-insert-bisect-rest magit-insert-bisect-log magit-insert-untracked-files magit-insert-unstaged-changes magit-insert-staged-changes magit-insert-stashes magit-insert-unpushed-to-pushremote magit-insert-unpushed-to-upstream magit-insert-recent-commits magit-insert-unpulled-from-pushremote magit-insert-unpulled-from-upstream))
  '(make-backup-files nil)
+ '(modus-themes-deuteranopia t)
  '(org-agenda-files '("~/datetree.org"))
  '(org-capture-templates
    '(("d" "datetree" entry
       (file+olp+datetree "~/datetree.org")
       "* %i%?" :jump-to-captured t :tree-type week)))
  '(package-selected-packages
-   '(json-mode company web-mode typescript-mode yaml-mode dockerfile-mode markdown-mode go-mode rego-mode highlight-thing leuven-theme python-black restclient modus-themes helm-projectile undo-tree eglot helm magit projectile pyvenv))
+   '(cider clojure-mode inf-clojure solarized-theme json-mode company web-mode typescript-mode yaml-mode dockerfile-mode markdown-mode go-mode rego-mode highlight-thing leuven-theme python-black restclient modus-themes helm-projectile undo-tree eglot helm magit projectile pyvenv))
+ '(projectile-project-root-files
+   '("dune-project" "pubspec.yaml" "info.rkt" "Cargo.toml" "stack.yaml" "DESCRIPTION" "Eldev" "Cask" "shard.yml" "Gemfile" ".bloop" "deps.edn" "build.boot" "project.clj" "build.sc" "build.sbt" "application.yml" "gradlew" "build.gradle" "pom.xml" "poetry.lock" "Pipfile" "tox.ini" "setup.py" "requirements.txt" "manage.py" "angular.json" "package.json" "gulpfile.js" "Gruntfile.js" "mix.exs" "rebar.config" "composer.json" "CMakeLists.txt" "GNUMakefile" "Makefile" "debian/control" "WORKSPACE" "flake.nix" "default.nix" "meson.build" "SConstruct" "GTAGS" "TAGS" "configure.ac" "configure.in" "cscope.out" "go.mod"))
  '(projectile-project-root-functions
    '(projectile-root-local projectile-root-top-down projectile-root-bottom-up projectile-root-top-down-recurring))
  '(rego-format-at-save nil)
  '(ring-bell-function 'ignore)
  '(scroll-bar-mode nil)
  '(show-paren-mode t)
+ '(tab-width 4)
  '(tool-bar-mode nil)
  '(undo-tree-auto-save-history nil))
 (custom-set-faces
