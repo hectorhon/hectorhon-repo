@@ -4,6 +4,17 @@
 
 (windmove-default-keybindings)
 
+(defun copy-buffer-file-name ()
+  "Copy the current 'buffer-file-name to the clipboard."
+  (interactive)
+  (let ((filename (if (equal major-mode 'dired-mode)
+                      default-directory
+                    (buffer-file-name))))
+    (when filename
+      (kill-new filename)
+      (message filename))))
+(global-set-key (kbd "C-c z") (quote copy-buffer-file-name))
+
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
 
