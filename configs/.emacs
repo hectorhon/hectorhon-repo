@@ -1,42 +1,19 @@
+;; (require 'modus-themes)
+;; (modus-themes-load-themes)
+;; (modus-themes-load-operandi)
+
+(load-theme 'solarized-light t)
+
+(require 'package)
+(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
+(package-initialize)
+
+(setenv "PATH" (concat "c:/Program Files/Git/usr/bin;" (getenv "PATH")))
+(setq exec-path (cons "C:/Program Files/Git/usr/bin" exec-path))
+
 (windmove-default-keybindings)
 (global-set-key [M-down] (quote scroll-up-line))
 (global-set-key [M-up] (quote scroll-down-line))
-(global-set-key [M-right] (lambda ()
-                            (interactive)
-                            (set-window-hscroll (selected-window)
-                                                (1+ (window-hscroll)))))
-(global-set-key [M-left] (lambda ()
-                           (interactive)
-                           (set-window-hscroll (selected-window)
-                                               (1- (window-hscroll)))))
-
-(defun format-buffer ()
-  "Indent the entire buffer and deletes all trailing whitespace."
-  (interactive)
-  (save-excursion
-    (indent-region (point-min) (point-max) nil))
-  (delete-trailing-whitespace))
-(global-set-key (kbd "C-c f") (quote format-buffer))
-
-(defadvice yank (after indent-region activate)
-  (if (derived-mode-p 'prog-mode)
-      (indent-region (region-beginning) (region-end) nil)))
-
-(defun copy-buffer-file-name ()
-  "Copy the current 'buffer-file-name to the clipboard."
-  (interactive)
-  (let ((filename (if (equal major-mode 'dired-mode)
-                      default-directory
-                    (buffer-file-name))))
-    (when filename
-      (kill-new filename)
-      (message filename))))
-(global-set-key (kbd "C-c z") (quote copy-buffer-file-name))
-
-(defun show-popup-yank-menu ()
-  (interactive)
-  (popup-menu 'yank-menu))
-(global-set-key (kbd "C-c y") (quote show-popup-yank-menu))
 
 (defvar newline-and-indent t
   "Modify the behavior of the open-*-line functions to cause them to autoindent.")
@@ -63,70 +40,98 @@
 (global-set-key (kbd "C-o") 'open-next-line)
 (global-set-key (kbd "M-o") 'open-previous-line)
 
-(require 'package)
-(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
+(defun format-buffer ()
+  "Indent the entire buffer and deletes all trailing whitespace."
+  (interactive)
+  (save-excursion
+    (indent-region (point-min) (point-max) nil))
+  (delete-trailing-whitespace))
 
-(use-package solarized-theme
-  :ensure t
-  :config (load-theme 'solarized-light t))
+(defun copy-buffer-file-name ()
+  "Copy the current 'buffer-file-name to the clipboard."
+  (interactive)
+  (let ((filename (if (equal major-mode 'dired-mode)
+                      default-directory
+                    (buffer-file-name))))
+    (when filename
+      (kill-new filename)
+      (message filename))))
+(global-set-key (kbd "C-c z") (quote copy-buffer-file-name))
 
-(add-hook 'prog-mode-hook 'display-line-numbers-mode)
+(helm-mode 1)
+(global-set-key (kbd "M-x") 'helm-M-x)
+(global-set-key (kbd "C-x C-f") 'helm-find-files)
 
-(use-package undo-tree
-  :ensure t
-  :config (global-undo-tree-mode))
+(require 'project)
 
-(use-package company
-  :ensure t
-  :hook (lsp-mode . company-mode)
-  :bind (:map company-mode-map
-              ("C-c TAB" . company-complete)))
+(defun git-ignores (dir)
+  (let* ((root-command (format "git -C %s rev-parse --show-toplevel" dir))
+         (root-path (replace-regexp-in-string
+                     "\n\\'" "" (shell-command-to-string root-command)))
+         (relative-dir (file-relative-name dir root-path))
+         (command (format "git -C %s status --ignored --porcelain %s" root-path dir))
+         (output (shell-command-to-string command))
+         (lines (split-string output "\n"))
+         (ignored (seq-filter (lambda (line)
+                                (string-prefix-p "!!" line))
+                              lines))
+         (result (mapcar (lambda (s)
+                           (file-relative-name (substring s 3) relative-dir))
+                         ignored)))
+    result))
 
-(use-package helm
-  :ensure t
-  :config (helm-mode 1)
-  :bind (("C-x C-f" . helm-find-files)
-	 ("M-x" . helm-M-x)))
+(cl-defmethod project-root (project)
+  (cdr project))
 
-(use-package magit
-  :ensure t)
+(cl-defmethod project-ignores (project dir)
+  (git-ignores dir))
 
-(use-package flycheck
-  :ensure t
-  :bind (:map flycheck-mode-map
-              ("M-n" . flycheck-next-error)
-              ("M-p" . flycheck-previous-error)))
+(defun clojure-project (dir)
+  (let ((p (locate-dominating-file dir "project.clj")))
+    (if p (cons 'clojure-project-clj (expand-file-name p)) nil)))
+(add-hook 'project-find-functions #'clojure-project)
 
-(use-package projectile
-  :ensure t
-  :init (projectile-mode +1)
-  :bind (:map projectile-mode-map
-	      ("C-c p" . projectile-command-map)))
+(require 'clojure-mode)
+(define-key clojure-mode-map (kbd "C-c f") 'cider-format-buffer)
+;; (add-hook 'clojure-mode-hook
+;;           (lambda ()
+;;             (when (project-current)
+;;               (eglot-ensure))))
 
-(use-package helm-projectile
-  :ensure t)
+(defun scala-project (dir)
+  (let ((p (locate-dominating-file dir "build.sbt")))
+    (if p (cons 'scala-build-sbt (expand-file-name p)) nil)))
+(add-hook 'project-find-functions #'scala-project)
 
-(use-package lsp-mode
-  :ensure t
-  :hook (rust-mode . lsp-deferred)
-  :config (define-key lsp-mode-map (kbd "C-c l") lsp-command-map)
-  :bind (:map lsp-mode-map
-              ("C-." . lsp-execute-code-action)))
+(defun python-project (dir)
+  (let ((p (locate-dominating-file dir "pyproject.toml")))
+    (if p (cons 'python-pyproject-toml (expand-file-name p)) nil)))
+(add-hook 'project-find-functions #'python-project)
 
-(use-package lsp-ui
-  :ensure t)
+(add-hook 'python-mode-hook
+          (lambda ()
+            (when (project-current)
+              (let ((venvpath (concat (cdr (project-current)) ".venv")))
+                (message "Activating pyvenv %s" venvpath)
+                (pyvenv-mode)
+                (pyvenv-activate venvpath)
+                (eglot-ensure)))))
 
-(use-package helm-lsp
-  :ensure t)
+(defun npm-project (dir)
+  (let ((p (locate-dominating-file dir "package.json")))
+    (if p (cons 'npm-package-json (expand-file-name p)) nil)))
+(add-hook 'project-find-functions #'npm-project)
 
-(use-package rust-mode
-  :ensure t)
+(require 'rjsx-mode)
+(add-hook 'rjsx-mode-hook
+          (lambda ()
+            (when (project-current)
+              (eglot-ensure))))
+(define-key rjsx-mode-map (kbd "M-.") nil)
 
-(use-package treemacs
-  :ensure t)
-
-(use-package lsp-treemacs
-  :ensure t)
+(require 'flymake)
+(define-key flymake-mode-map (kbd "M-p") 'flymake-goto-prev-error)
+(define-key flymake-mode-map (kbd "M-n") 'flymake-goto-next-error)
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -135,42 +140,29 @@
  ;; If there is more than one, they won't work right.
  '(auto-save-default nil)
  '(blink-cursor-mode nil)
+ '(cider-connection-message-fn nil)
+ '(cider-repl-display-help-banner nil)
+ '(cider-save-file-on-load t)
  '(column-number-mode t)
- '(company-minimum-prefix-length 2)
- '(compilation-always-kill t)
- '(compilation-ask-about-save nil)
  '(create-lockfiles nil)
- '(desktop-save-mode t)
  '(display-time-mode t)
- '(global-auto-revert-mode t)
+ '(eglot-confirm-server-initiated-edits nil)
+ '(eldoc-echo-area-use-multiline-p nil)
  '(indent-tabs-mode nil)
  '(inhibit-startup-screen t)
- '(lsp-lens-enable nil)
- '(lsp-modeline-code-actions-enable nil)
- '(lsp-modeline-diagnostics-enable nil)
- '(lsp-rust-analyzer-diagnostics-disabled ["unresolved-proc-macro"])
- '(lsp-signature-render-documentation nil)
- '(lsp-ui-doc-enable nil)
- '(lsp-ui-sideline-enable nil)
  '(make-backup-files nil)
- '(mode-line-format
-   '("%e" " " mode-line-misc-info mode-line-front-space mode-line-mule-info mode-line-client mode-line-modified mode-line-remote mode-line-frame-identification mode-line-buffer-identification "   " mode-line-position
-     (vc-mode vc-mode)
-     "  " mode-line-modes mode-line-end-spaces))
  '(package-selected-packages
-   '(solarized-theme undo-tree use-package tree-sitter rust-mode magit helm-projectile helm-lsp flycheck company))
- '(projectile-globally-ignored-directories
-   '(".idea" ".vscode" ".ensime_cache" ".eunit" ".git" ".hg" ".fslckout" "_FOSSIL_" ".bzr" "_darcs" ".tox" ".svn" ".stack-work" ".ccls-cache" ".cache" ".clangd" "target" "node_modules"))
- '(projectile-project-root-functions
-   '(projectile-root-local projectile-root-top-down-recurring projectile-root-top-down projectile-root-bottom-up))
+   '(solarized-theme yaml-mode helm rjsx-mode pyvenv sbt-mode scala-mode cider eglot leuven-theme magit modus-themes))
  '(ring-bell-function 'ignore)
- '(show-paren-delay 0)
- '(show-paren-mode t)
- '(tool-bar-mode nil)
- '(truncate-lines t))
+ '(safe-local-variable-values
+   '((eglot-ignored-server-capabilities :completionProvider)
+     (eglot-ignored-server-capabilities :hoverProvider)
+     (eglot-ignored-server-capabilities :hoverProvider :completionProvider)))
+ '(scroll-bar-mode nil)
+ '(tool-bar-mode nil))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:family "Roboto Mono" :foundry "outline" :slant normal :weight normal :height 102 :width normal)))))
+ '(default ((t (:family "Hack" :foundry "outline" :slant normal :weight normal :height 90 :width normal)))))
