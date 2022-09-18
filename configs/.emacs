@@ -1,12 +1,23 @@
-;; (require 'modus-themes)
-;; (modus-themes-load-themes)
-;; (modus-themes-load-operandi)
-
-(load-theme 'solarized-light t)
-
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
 (package-initialize)
+
+(load-theme 'leuven t)
+;; (load-theme 'zenburn t)
+
+(require 'orderless)
+(setq completion-styles '(orderless basic)
+      completion-category-overrides '((file (styles basic partial-completion))))
+
+(vertico-mode)
+(savehist-mode)
+
+(setq completion-in-region-function
+      (lambda (&rest args)
+        (apply (if vertico-mode
+                   #'consult-completion-in-region
+                 #'completion--in-region)
+               args)))
 
 (setenv "PATH" (concat "c:/Program Files/Git/usr/bin;" (getenv "PATH")))
 (setq exec-path (cons "C:/Program Files/Git/usr/bin" exec-path))
@@ -46,6 +57,7 @@
   (save-excursion
     (indent-region (point-min) (point-max) nil))
   (delete-trailing-whitespace))
+(global-set-key (kbd "C-c f") (quote format-buffer))
 
 (defun copy-buffer-file-name ()
   "Copy the current 'buffer-file-name to the clipboard."
@@ -57,10 +69,6 @@
       (kill-new filename)
       (message filename))))
 (global-set-key (kbd "C-c z") (quote copy-buffer-file-name))
-
-(helm-mode 1)
-(global-set-key (kbd "M-x") 'helm-M-x)
-(global-set-key (kbd "C-x C-f") 'helm-find-files)
 
 (require 'project)
 
@@ -92,11 +100,12 @@
 (add-hook 'project-find-functions #'clojure-project)
 
 (require 'clojure-mode)
+(require 'flycheck-clj-kondo)
 (define-key clojure-mode-map (kbd "C-c f") 'cider-format-buffer)
-;; (add-hook 'clojure-mode-hook
-;;           (lambda ()
-;;             (when (project-current)
-;;               (eglot-ensure))))
+(add-hook 'clojure-mode-hook
+          (lambda ()
+            (electric-pair-local-mode)
+            (flycheck-mode)))
 
 (defun scala-project (dir)
   (let ((p (locate-dominating-file dir "build.sbt")))
@@ -133,6 +142,10 @@
 (define-key flymake-mode-map (kbd "M-p") 'flymake-goto-prev-error)
 (define-key flymake-mode-map (kbd "M-n") 'flymake-goto-next-error)
 
+(require 'flycheck)
+(define-key flycheck-mode-map (kbd "M-p") 'flycheck-previous-error)
+(define-key flycheck-mode-map (kbd "M-n") 'flycheck-next-error)
+
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -148,16 +161,18 @@
  '(display-time-mode t)
  '(eglot-confirm-server-initiated-edits nil)
  '(eldoc-echo-area-use-multiline-p nil)
+ '(electric-pair-mode t)
+ '(ffap-machine-p-known 'reject)
+ '(global-auto-revert-mode t)
  '(indent-tabs-mode nil)
  '(inhibit-startup-screen t)
+ '(js2-mode-show-parse-errors nil)
+ '(js2-mode-show-strict-warnings nil)
+ '(js2-strict-missing-semi-warning nil)
  '(make-backup-files nil)
  '(package-selected-packages
-   '(solarized-theme yaml-mode helm rjsx-mode pyvenv sbt-mode scala-mode cider eglot leuven-theme magit modus-themes))
+   '(flycheck-clj-kondo flycheck zenburn-theme leuven-theme modus-themes solarized-theme spacemacs-theme doom-themes consult eglot magit cider rjsx-mode orderless vertico))
  '(ring-bell-function 'ignore)
- '(safe-local-variable-values
-   '((eglot-ignored-server-capabilities :completionProvider)
-     (eglot-ignored-server-capabilities :hoverProvider)
-     (eglot-ignored-server-capabilities :hoverProvider :completionProvider)))
  '(scroll-bar-mode nil)
  '(tool-bar-mode nil))
 (custom-set-faces
@@ -165,4 +180,4 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:family "Hack" :foundry "outline" :slant normal :weight normal :height 90 :width normal)))))
+ '(default ((t (:family "Hack" :foundry "outline" :slant normal :weight normal :height 102 :width normal)))))
