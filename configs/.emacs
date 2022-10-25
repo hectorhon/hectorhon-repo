@@ -1,58 +1,52 @@
+(setenv "PATH" (concat "c:/Program Files/Git/usr/bin;" (getenv "PATH")))
+(setq exec-path (cons "C:/Program Files/Git/usr/bin" exec-path))
+
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
 (package-initialize)
 
-(load-theme 'leuven t)
+;; (require 'modus-themes)
+;; (modus-themes-load-themes)
+;; (modus-themes-load-operandi)
+
+;; (load-theme 'leuven t)
+;; (load-theme 'doom-ayu-light t)
+;; (load-theme 'doom-plain t)
+;; (load-theme 'doom-homage-white t)
+;; (load-theme 'doom-one-light t)
+;; (load-theme 'doom-solarized-light t)
+;; (load-theme 'solarized-light t)
+;; (load-theme 'solarized-light-high-contrast t)
+;; (load-theme 'solarized-selenized-white t)
+;; (load-theme 'spacemacs-light t)
+;; (load-theme 'sanityinc-tomorrow-day t)
+
+;; (load-theme 'doom-one t)
+;; (load-theme 'solarized-dark t)
 ;; (load-theme 'zenburn t)
 
-(require 'orderless)
-(setq completion-styles '(orderless basic)
-      completion-category-overrides '((file (styles basic partial-completion))))
-
-(vertico-mode)
-(savehist-mode)
-
-(setq completion-in-region-function
-      (lambda (&rest args)
-        (apply (if vertico-mode
-                   #'consult-completion-in-region
-                 #'completion--in-region)
-               args)))
-
-(setenv "PATH" (concat "c:/Program Files/Git/usr/bin;" (getenv "PATH")))
-(setq exec-path (cons "C:/Program Files/Git/usr/bin" exec-path))
-
 (windmove-default-keybindings)
-(global-set-key [M-down] (quote scroll-up-line))
-(global-set-key [M-up] (quote scroll-down-line))
-
-(defvar newline-and-indent t
-  "Modify the behavior of the open-*-line functions to cause them to autoindent.")
+(global-set-key [M-down] 'scroll-up-line)
+(global-set-key [M-up] 'scroll-down-line)
+(global-set-key (kbd "M-p") 'previous-error)
+(global-set-key (kbd "M-n") 'next-error)
 
 (defun open-next-line (arg)
-  "Move to the next line and then opens a line.
-    See also `newline-and-indent'."
   (interactive "p")
   (end-of-line)
   (open-line arg)
   (next-line 1)
-  (when newline-and-indent
-    (indent-according-to-mode)))
+  (indent-according-to-mode))
+(global-set-key (kbd "C-o") 'open-next-line)
 
 (defun open-previous-line (arg)
-  "Open a new line before the current one.
-     See also `newline-and-indent'."
   (interactive "p")
   (beginning-of-line)
   (open-line arg)
-  (when newline-and-indent
-    (indent-according-to-mode)))
-
-(global-set-key (kbd "C-o") 'open-next-line)
+  (indent-according-to-mode))
 (global-set-key (kbd "M-o") 'open-previous-line)
 
 (defun format-buffer ()
-  "Indent the entire buffer and deletes all trailing whitespace."
   (interactive)
   (save-excursion
     (indent-region (point-min) (point-max) nil))
@@ -60,7 +54,6 @@
 (global-set-key (kbd "C-c f") (quote format-buffer))
 
 (defun copy-buffer-file-name ()
-  "Copy the current 'buffer-file-name to the clipboard."
   (interactive)
   (let ((filename (if (equal major-mode 'dired-mode)
                       default-directory
@@ -69,6 +62,22 @@
       (kill-new filename)
       (message filename))))
 (global-set-key (kbd "C-c z") (quote copy-buffer-file-name))
+
+(savehist-mode)
+
+(require 'orderless)
+(setq completion-styles '(orderless basic)
+      completion-category-overrides nil
+      completion-category-defaults nil)
+
+(require 'vertico)
+(vertico-mode)
+(setq completion-in-region-function
+      (lambda (&rest args)
+        (apply (if vertico-mode
+                   #'consult-completion-in-region
+                 #'completion--in-region)
+               args)))
 
 (require 'project)
 
@@ -91,60 +100,87 @@
 (cl-defmethod project-root (project)
   (cdr project))
 
+(cl-defmethod project-files (project &optional dirs)
+  (let* ((dir (car (or dirs
+                       (list (project-root project)))))
+         (root-command (format "git -C %s rev-parse --show-toplevel" dir))
+         (root-path (file-name-as-directory
+                     (replace-regexp-in-string
+                      "\n\\'" "" (shell-command-to-string root-command))))
+         (command (format "git -C %s ls-files -oc --exclude-standard --full-name" dir))
+         (output (replace-regexp-in-string
+                  "\n\\'" "" (shell-command-to-string command)))
+         (lines (split-string output "\n" t))
+         (deleted-paths
+          (let* ((command
+                  (format "git -C %s ls-files -d --exclude-standard --full-name" dir))
+                 (output (replace-regexp-in-string
+                          "\n\\'" "" (shell-command-to-string command)))
+                 (lines (split-string output "\n" t)))
+            lines))
+         (result (mapcar (lambda (s) (concat root-path s))
+                         (seq-difference lines deleted-paths))))
+    result))
+
 (cl-defmethod project-ignores (project dir)
   (git-ignores dir))
 
-(defun clojure-project (dir)
-  (let ((p (locate-dominating-file dir "project.clj")))
-    (if p (cons 'clojure-project-clj (expand-file-name p)) nil)))
-(add-hook 'project-find-functions #'clojure-project)
+(add-hook 'project-find-functions
+          (lambda (dir)
+            (let ((p (locate-dominating-file dir "project.clj")))
+              (if p (cons 'clojure-project-clj (expand-file-name p)) nil))))
 
-(require 'clojure-mode)
-(require 'flycheck-clj-kondo)
-(define-key clojure-mode-map (kbd "C-c f") 'cider-format-buffer)
-(add-hook 'clojure-mode-hook
-          (lambda ()
-            (electric-pair-local-mode)
-            (flycheck-mode)))
+(add-hook 'project-find-functions
+          (lambda (dir)
+            (let ((p (locate-dominating-file dir "deps.edn")))
+              (if p (cons 'clojure-deps-edn (expand-file-name p)) nil))))
 
-(defun scala-project (dir)
-  (let ((p (locate-dominating-file dir "build.sbt")))
-    (if p (cons 'scala-build-sbt (expand-file-name p)) nil)))
-(add-hook 'project-find-functions #'scala-project)
+(add-hook 'project-find-functions
+          (lambda (dir)
+            (let ((p (locate-dominating-file dir "build.sbt")))
+              (if p (cons 'scala-build-sbt (expand-file-name p)) nil))))
 
-(defun python-project (dir)
-  (let ((p (locate-dominating-file dir "pyproject.toml")))
-    (if p (cons 'python-pyproject-toml (expand-file-name p)) nil)))
-(add-hook 'project-find-functions #'python-project)
+(add-hook 'project-find-functions
+          (lambda (dir)
+            (let ((p (locate-dominating-file dir "pyproject.toml")))
+              (if p (cons 'python-pyproject-toml (expand-file-name p)) nil))))
 
-(add-hook 'python-mode-hook
-          (lambda ()
-            (when (project-current)
-              (let ((venvpath (concat (cdr (project-current)) ".venv")))
-                (message "Activating pyvenv %s" venvpath)
-                (pyvenv-mode)
-                (pyvenv-activate venvpath)
-                (eglot-ensure)))))
-
-(defun npm-project (dir)
-  (let ((p (locate-dominating-file dir "package.json")))
-    (if p (cons 'npm-package-json (expand-file-name p)) nil)))
-(add-hook 'project-find-functions #'npm-project)
-
-(require 'rjsx-mode)
-(add-hook 'rjsx-mode-hook
-          (lambda ()
-            (when (project-current)
-              (eglot-ensure))))
-(define-key rjsx-mode-map (kbd "M-.") nil)
+(add-hook 'project-find-functions
+          (lambda (dir)
+            (let ((p (locate-dominating-file dir "package.json")))
+              (if p (cons 'npm-package-json (expand-file-name p)) nil))))
 
 (require 'flymake)
 (define-key flymake-mode-map (kbd "M-p") 'flymake-goto-prev-error)
 (define-key flymake-mode-map (kbd "M-n") 'flymake-goto-next-error)
 
-(require 'flycheck)
-(define-key flycheck-mode-map (kbd "M-p") 'flycheck-previous-error)
-(define-key flycheck-mode-map (kbd "M-n") 'flycheck-next-error)
+;; (require 'clojure-mode)
+;; (require 'flymake-kondor)
+;; (add-hook 'clojure-mode-hook (lambda ()
+;; 			       (flymake-kondor-setup)
+;; 			       (flymake-mode)))
+
+(require 'cider-mode)
+(define-key cider-mode-map (kbd "C-c f") 'cider-format-buffer)
+(define-key cider-mode-map (kbd "M-?") 'cider-xref-fn-refs)
+(define-key cider-mode-map (kbd "M-,") 'cider-pop-back)
+
+(require 'js)
+(define-key js-mode-map (kbd "M-.") nil)
+
+;; (require 'rjsx-mode)
+;; (define-key rjsx-mode-map (kbd "M-.") nil)
+;; (define-key rjsx-mode-map "<" nil)
+;; (define-key rjsx-mode-map (kbd "C-d") nil)
+;; (define-key rjsx-mode-map ">" nil)
+
+(require 'web-mode)
+(add-to-list 'auto-mode-alist '("\\.mustache\\'" . web-mode))
+
+(require 'eglot)
+(add-hook 'js-mode-hook (lambda ()
+                          (when (project-current) (eglot-ensure))))
+(define-key eglot-mode-map (kbd "C-c C-r") 'eglot-rename)
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -155,29 +191,32 @@
  '(blink-cursor-mode nil)
  '(cider-connection-message-fn nil)
  '(cider-repl-display-help-banner nil)
+ '(cider-repl-prompt-function 'cider-repl-prompt-lastname)
  '(cider-save-file-on-load t)
  '(column-number-mode t)
  '(create-lockfiles nil)
- '(display-time-mode t)
- '(eglot-confirm-server-initiated-edits nil)
+ '(dired-listing-switches "-alB")
+ '(doom-themes-enable-italic nil)
  '(eldoc-echo-area-use-multiline-p nil)
- '(electric-pair-mode t)
- '(ffap-machine-p-known 'reject)
  '(global-auto-revert-mode t)
  '(indent-tabs-mode nil)
  '(inhibit-startup-screen t)
+ '(js-switch-indent-offset 4)
  '(js2-mode-show-parse-errors nil)
  '(js2-mode-show-strict-warnings nil)
- '(js2-strict-missing-semi-warning nil)
  '(make-backup-files nil)
  '(package-selected-packages
-   '(flycheck-clj-kondo flycheck zenburn-theme leuven-theme modus-themes solarized-theme spacemacs-theme doom-themes consult eglot magit cider rjsx-mode orderless vertico))
+   '(web-mode zenburn-theme yaml-mode color-theme-sanityinc-tomorrow solarized-theme spacemacs-theme doom-themes flymake-kondor leuven-theme consult cider clojure-mode eglot magit modus-themes orderless vertico))
  '(ring-bell-function 'ignore)
  '(scroll-bar-mode nil)
  '(tool-bar-mode nil))
+(put 'downcase-region 'disabled nil)
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:family "Hack" :foundry "outline" :slant normal :weight normal :height 102 :width normal)))))
+ '(default ((t (:family "IBM Plex Mono" :foundry "outline" :slant normal :weight normal :height 102 :width normal))))
+ '(cider-test-failure-face ((t (:background "orange red" :foreground "white"))))
+ '(font-lock-comment-face ((t (:background "cornsilk" :foreground "Firebrick"))))
+ '(fringe ((t (:inherit default)))))
