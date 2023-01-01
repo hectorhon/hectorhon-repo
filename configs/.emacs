@@ -11,6 +11,21 @@
 (global-set-key (kbd "M-p") 'previous-error)
 (global-set-key (kbd "M-n") 'next-error)
 
+(defun open-next-line (arg)
+  (interactive "p")
+  (end-of-line)
+  (open-line arg)
+  (next-line 1)
+  (indent-according-to-mode))
+(global-set-key (kbd "C-o") 'open-next-line)
+
+(defun open-previous-line (arg)
+  (interactive "p")
+  (beginning-of-line)
+  (open-line arg)
+  (indent-according-to-mode))
+(global-set-key (kbd "M-o") 'open-previous-line)
+
 (defun format-buffer ()
   (interactive)
   (save-excursion
@@ -76,6 +91,7 @@
 
 (require 'js)
 (define-key js-mode-map (kbd "M-.") nil)
+(advice-add 'js--multi-line-declaration-indentation :override #'ignore)
 
 (require 'flymake)
 (define-key flymake-mode-map (kbd "M-n") 'flymake-goto-next-error)
@@ -93,24 +109,31 @@
  ;; If there is more than one, they won't work right.
  '(auto-save-default nil)
  '(blink-cursor-mode nil)
+ '(cider-connection-message-fn nil)
  '(cider-repl-display-help-banner nil)
  '(cider-repl-prompt-function 'cider-repl-prompt-lastname)
  '(cider-save-file-on-load t)
+ '(cider-special-mode-truncate-lines nil)
  '(column-number-mode t)
  '(completion-styles '(orderless basic))
  '(create-lockfiles nil)
+ '(eldoc-echo-area-use-multiline-p nil)
+ '(global-auto-revert-mode t)
+ '(indent-tabs-mode nil)
  '(inhibit-startup-screen t)
  '(make-backup-files nil)
  '(package-selected-packages
-   '(consult orderless vertico doom-themes cider clojure-mode eglot magit))
+   '(yaml-mode leuven-theme spacemacs-theme consult orderless vertico doom-themes cider clojure-mode eglot magit))
  '(ring-bell-function 'ignore)
  '(savehist-mode t)
  '(scroll-bar-mode nil)
  '(tool-bar-mode nil)
+ '(tooltip-mode nil)
  '(vertico-mode t))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:family "Hack" :foundry "outline" :slant normal :weight normal :height 90 :width normal)))))
+ '(default ((t (:family "Fira Mono" :foundry "outline" :slant normal :weight normal :height 102 :width normal))))
+ '(cider-test-failure-face ((t (:background "orange red" :foreground "white")))))
