@@ -102,6 +102,11 @@
                           (if (project-current)
                               (eglot-ensure))))
 
+(defun hectorhon/clojure-grep-defmethods ()
+  (interactive)
+  (project-find-regexp (concat "defmethod" "[[:space:]]" (thing-at-point 'symbol))))
+(global-set-key (kbd "C-c g") 'hectorhon/clojure-grep-defmethods)
+
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -135,5 +140,6 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:family "Fira Mono" :foundry "outline" :slant normal :weight normal :height 102 :width normal))))
+ '(default ((t (:family "Liberation Mono" :foundry "outline" :slant normal :weight normal :height 102 :width normal))))
  '(cider-test-failure-face ((t (:background "orange red" :foreground "white")))))
+(put 'upcase-region 'disabled nil)
