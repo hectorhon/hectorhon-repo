@@ -89,6 +89,11 @@
             (let ((p (locate-dominating-file dir "package.json")))
               (if p (cons 'nodejs-package-json (expand-file-name p)) nil))))
 
+(add-hook 'project-find-functions
+          (lambda (dir)
+            (let ((p (locate-dominating-file dir "Cargo.toml")))
+              (if p (cons 'rust-cargo-toml (expand-file-name p)) nil))))
+
 (require 'js)
 (define-key js-mode-map (kbd "M-.") nil)
 (advice-add 'js--multi-line-declaration-indentation :override #'ignore)
@@ -102,6 +107,17 @@
                           (if (project-current)
                               (eglot-ensure))))
 
+(require 'clojure-mode)
+(put-clojure-indent 'match 1)
+(add-hook 'clojure-mode-hook #'paredit-mode)
+(define-fringe-bitmap 'cider-filled-rectangle
+  (make-vector 100 #b01111110)
+  nil nil 'top)
+(with-eval-after-load 'cider
+  (setf cider--fringe-overlay-good
+        (propertize " " 'display '(left-fringe
+                                   cider-filled-rectangle
+                                   cider-fringe-good-face))))
 (defun hectorhon/clojure-grep-defmethods ()
   (interactive)
   (project-find-regexp
@@ -124,6 +140,7 @@
  '(cider-save-file-on-load t)
  '(cider-special-mode-truncate-lines nil)
  '(column-number-mode t)
+ '(compilation-ask-about-save nil)
  '(completion-styles '(orderless basic))
  '(create-lockfiles nil)
  '(eldoc-echo-area-use-multiline-p nil)
@@ -132,7 +149,7 @@
  '(inhibit-startup-screen t)
  '(make-backup-files nil)
  '(package-selected-packages
-   '(magit yaml-mode leuven-theme spacemacs-theme consult orderless vertico doom-themes cider clojure-mode eglot))
+   '(paredit solarized-theme rust-mode magit yaml-mode leuven-theme spacemacs-theme consult orderless vertico doom-themes cider clojure-mode eglot))
  '(ring-bell-function 'ignore)
  '(savehist-mode t)
  '(scroll-bar-mode nil)
@@ -144,6 +161,9 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:family "Hack" :foundry "outline" :slant normal :weight normal :height 90 :width normal))))
- '(cider-test-failure-face ((t (:background "orange red" :foreground "white")))))
+ '(default ((t (:family "Roboto Mono" :foundry "outline" :slant normal :weight normal :height 102 :width normal))))
+ '(cider-fringe-good-face ((t (:inherit font-lock-keyword-face))))
+ '(cider-test-failure-face ((t (:background "orange red" :foreground "white"))))
+ '(fixed-pitch ((t (:inherit default))))
+ '(fringe ((t (:inherit default)))))
 (put 'upcase-region 'disabled nil)
