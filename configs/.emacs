@@ -94,6 +94,11 @@
             (let ((p (locate-dominating-file dir "Cargo.toml")))
               (if p (cons 'rust-cargo-toml (expand-file-name p)) nil))))
 
+(add-hook 'project-find-functions
+          (lambda (dir)
+            (let ((p (locate-dominating-file dir "pom.xml")))
+              (if p (cons 'java-pom-xml (expand-file-name p)) nil))))
+
 (require 'js)
 (define-key js-mode-map (kbd "M-.") nil)
 (advice-add 'js--multi-line-declaration-indentation :override #'ignore)
@@ -106,10 +111,26 @@
 (add-hook 'js-mode-hook (lambda ()
                           (if (project-current)
                               (eglot-ensure))))
+;; https://download.eclipse.org/jdtls/milestones/1.19.0/jdt-language-server-1.19.0-202301171536.tar.gz
+(add-to-list 'eglot-server-programs
+             '(java-mode . ("java"
+                            "-Declipse.application=org.eclipse.jdt.ls.core.id1"
+                            "-Dosgi.bundles.defaultStartLevel=4"
+                            "-Declipse.product=org.eclipse.jdt.ls.core.product"
+                            "-Dosgi.checkConfiguration=true"
+                            "-Dosgi.sharedConfiguration.area=C:/Users/hectorhon/jdt/config_win"
+                            "-Dosgi.sharedConfiguration.area.readOnly=true"
+                            "-Dosgi.configuration.cascaded=true"
+                            "-Xms1G"
+                            "--add-modules=ALL-SYSTEM"
+                            "--add-opens" "java.base/java.util=ALL-UNNAMED"
+                            "--add-opens" "java.base/java.lang=ALL-UNNAMED"
+                            "-jar" "C:/Users/hectorhon/jdt/plugins/org.eclipse.equinox.launcher_1.6.400.v20210924-0641.jar"
+                            "-data" "C:/Users/hectorhon/temp/jdt")))
 
 (require 'clojure-mode)
 (put-clojure-indent 'match 1)
-(add-hook 'clojure-mode-hook #'paredit-mode)
+;; (add-hook 'clojure-mode-hook #'paredit-mode)
 (define-fringe-bitmap 'cider-filled-rectangle
   (make-vector 100 #b01111110)
   nil nil 'top)
@@ -161,7 +182,7 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:family "Roboto Mono" :foundry "outline" :slant normal :weight normal :height 102 :width normal))))
+ '(default ((t (:family "Hack" :foundry "outline" :slant normal :weight normal :height 102 :width normal))))
  '(cider-fringe-good-face ((t (:inherit font-lock-keyword-face))))
  '(cider-test-failure-face ((t (:background "orange red" :foreground "white"))))
  '(fixed-pitch ((t (:inherit default))))
