@@ -1,9 +1,6 @@
-(setenv "PATH" (concat "c:/Program Files/Git/usr/bin;" (getenv "PATH")))
+(setenv "PATH" (concat "c:/Program Files/Git/usr/bin;"
+                       (getenv "PATH")))
 (setq exec-path (cons "C:/Program Files/Git/usr/bin" exec-path))
-
-(require 'package)
-(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
-(package-initialize)
 
 (windmove-default-keybindings)
 (global-set-key [M-down] 'scroll-up-line)
@@ -43,109 +40,45 @@
       (message filename))))
 (global-set-key (kbd "C-c z") (quote copy-buffer-file-name))
 
-(setq completion-category-defaults nil)
-(setq completion-category-overrides nil)
-(setq completion-in-region-function
-      (lambda (&rest args)
-        (apply (if vertico-mode
-                   #'consult-completion-in-region
-                 #'completion--in-region)
-               args)))
+(require 'package)
+(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
+(package-initialize)
 
-(require 'project)
+(use-package savehist
+  :init (savehist-mode))
 
-(cl-defmethod project-root (project)
-  (cdr project))
+(use-package vertico
+  :init (vertico-mode)
+  :config (setq completion-in-region-function #'consult-completion-in-region))
 
-(cl-defmethod project-files (project &optional dirs)
-  (let* ((dir (car (or dirs
-                       (list (project-root project)))))
-         (root-command (format "git -C %s rev-parse --show-toplevel" dir))
-         (root-path (file-name-as-directory
-                     (replace-regexp-in-string
-                      "\n\\'" "" (shell-command-to-string root-command))))
-         (command (format "git -C %s ls-files -oc --exclude-standard --full-name" dir))
-         (output (replace-regexp-in-string
-                  "\n\\'" "" (shell-command-to-string command)))
-         (lines (split-string output "\n" t))
-         (deleted-paths
-          (let* ((command
-                  (format "git -C %s ls-files -d --exclude-standard --full-name" dir))
-                 (output (replace-regexp-in-string
-                          "\n\\'" "" (shell-command-to-string command)))
-                 (lines (split-string output "\n" t)))
-            lines))
-         (result (mapcar (lambda (s) (concat root-path s))
-                         (seq-difference lines deleted-paths))))
-    result))
+(use-package orderless
+  :init (setq completion-styles '(orderless basic)
+	      completion-category-defaults nil
+	      completion-category-overrides nil
+              completion-ignore-case t))
 
-(add-hook 'project-find-functions
-          (lambda (dir)
-            (let ((p (locate-dominating-file dir "project.clj")))
-              (if p (cons 'clojure-project-clj (expand-file-name p)) nil))))
+(use-package project
+  :config
+  (advice-add
+   #'project-try-vc
+   :around
+   (lambda (orig-fun &rest args)
+     (let ((res (apply orig-fun args)))
+       (when res
+	 (setf (nth 1 res) 'Git)
+	 res)))))
 
-(add-hook 'project-find-functions
-          (lambda (dir)
-            (let ((p (locate-dominating-file dir "package.json")))
-              (if p (cons 'nodejs-package-json (expand-file-name p)) nil))))
+(use-package eglot
+  :bind
+  ("C-." . eglot-code-actions)
+  ("C-c C-r" . eglot-rename))
 
-(add-hook 'project-find-functions
-          (lambda (dir)
-            (let ((p (locate-dominating-file dir "Cargo.toml")))
-              (if p (cons 'rust-cargo-toml (expand-file-name p)) nil))))
+(use-package flymake
+  :bind
+  ("M-p" . flymake-goto-prev-error)
+  ("M-n" . flymake-goto-next-error))
 
-(add-hook 'project-find-functions
-          (lambda (dir)
-            (let ((p (locate-dominating-file dir "pom.xml")))
-              (if p (cons 'java-pom-xml (expand-file-name p)) nil))))
-
-(require 'js)
-(define-key js-mode-map (kbd "M-.") nil)
-(advice-add 'js--multi-line-declaration-indentation :override #'ignore)
-
-(require 'flymake)
-(define-key flymake-mode-map (kbd "M-n") 'flymake-goto-next-error)
-(define-key flymake-mode-map (kbd "M-p") 'flymake-goto-prev-error)
-
-(require 'eglot)
-(add-hook 'js-mode-hook (lambda ()
-                          (if (project-current)
-                              (eglot-ensure))))
-;; https://download.eclipse.org/jdtls/milestones/1.19.0/jdt-language-server-1.19.0-202301171536.tar.gz
-(add-to-list 'eglot-server-programs
-             '(java-mode . ("java"
-                            "-Declipse.application=org.eclipse.jdt.ls.core.id1"
-                            "-Dosgi.bundles.defaultStartLevel=4"
-                            "-Declipse.product=org.eclipse.jdt.ls.core.product"
-                            "-Dosgi.checkConfiguration=true"
-                            "-Dosgi.sharedConfiguration.area=C:/Users/hectorhon/jdt/config_win"
-                            "-Dosgi.sharedConfiguration.area.readOnly=true"
-                            "-Dosgi.configuration.cascaded=true"
-                            "-Xms1G"
-                            "--add-modules=ALL-SYSTEM"
-                            "--add-opens" "java.base/java.util=ALL-UNNAMED"
-                            "--add-opens" "java.base/java.lang=ALL-UNNAMED"
-                            "-jar" "C:/Users/hectorhon/jdt/plugins/org.eclipse.equinox.launcher_1.6.400.v20210924-0641.jar"
-                            "-data" "C:/Users/hectorhon/temp/jdt")))
-
-(require 'clojure-mode)
-(put-clojure-indent 'match 1)
-;; (add-hook 'clojure-mode-hook #'paredit-mode)
-(define-fringe-bitmap 'cider-filled-rectangle
-  (make-vector 100 #b01111110)
-  nil nil 'top)
-(with-eval-after-load 'cider
-  (setf cider--fringe-overlay-good
-        (propertize " " 'display '(left-fringe
-                                   cider-filled-rectangle
-                                   cider-fringe-good-face))))
-(defun hectorhon/clojure-grep-defmethods ()
-  (interactive)
-  (project-find-regexp
-   (concat "defmethod"
-           "[[:space:]]"
-           (car (last (split-string (thing-at-point 'symbol) "/"))))))
-(global-set-key (kbd "C-c g") 'hectorhon/clojure-grep-defmethods)
+(add-to-list 'auto-mode-alist '("\\.tsx?\\'" . tsx-ts-mode))
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -154,37 +87,32 @@
  ;; If there is more than one, they won't work right.
  '(auto-save-default nil)
  '(blink-cursor-mode nil)
- '(cider-connection-message-fn nil)
- '(cider-repl-display-help-banner nil)
- '(cider-repl-prompt-function 'cider-repl-prompt-lastname)
- '(cider-repl-require-ns-on-set t)
- '(cider-save-file-on-load t)
- '(cider-special-mode-truncate-lines nil)
  '(column-number-mode t)
  '(compilation-ask-about-save nil)
- '(completion-styles '(orderless basic))
  '(create-lockfiles nil)
- '(eldoc-echo-area-use-multiline-p nil)
+ '(default-frame-alist '((width . 90) (height . 40)))
+ '(dired-free-space nil)
+ '(eglot-confirm-server-initiated-edits nil)
+ '(eglot-ignored-server-capabilities
+   '(:codeLensProvider :documentOnTypeFormattingProvider :documentLinkProvider :colorProvider :inlayHintProvider))
+ '(eldoc-echo-area-use-multiline-p 1)
  '(global-auto-revert-mode t)
  '(indent-tabs-mode nil)
  '(inhibit-startup-screen t)
+ '(initial-scratch-message nil)
+ '(js-switch-indent-offset 2)
  '(make-backup-files nil)
  '(package-selected-packages
-   '(paredit solarized-theme rust-mode magit yaml-mode leuven-theme spacemacs-theme consult orderless vertico doom-themes cider clojure-mode eglot))
+   '(doom-themes vertico modus-themes magit rust-mode consult orderless))
+ '(project-vc-extra-root-markers '("Cargo.toml" "package.json"))
  '(ring-bell-function 'ignore)
- '(savehist-mode t)
  '(scroll-bar-mode nil)
  '(tool-bar-mode nil)
- '(tooltip-mode nil)
- '(vertico-mode t))
+ '(typescript-ts-mode-indent-offset 4))
+(put 'upcase-region 'disabled nil)
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:family "Hack" :foundry "outline" :slant normal :weight normal :height 102 :width normal))))
- '(cider-fringe-good-face ((t (:inherit font-lock-keyword-face))))
- '(cider-test-failure-face ((t (:background "orange red" :foreground "white"))))
- '(fixed-pitch ((t (:inherit default))))
- '(fringe ((t (:inherit default)))))
-(put 'upcase-region 'disabled nil)
+ '(default ((t (:family "Hack" :foundry "outline" :slant normal :weight regular :height 102 :width normal)))))
