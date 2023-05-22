@@ -44,6 +44,9 @@
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
 (package-initialize)
 
+;; (use-package highlight-thing
+;;   :init (global-highlight-thing-mode))
+
 (use-package savehist
   :init (savehist-mode))
 
@@ -57,6 +60,9 @@
 	      completion-category-overrides nil
               completion-ignore-case t))
 
+(use-package corfu
+  :init (global-corfu-mode))
+
 (use-package project
   :config
   (advice-add
@@ -68,6 +74,10 @@
 	 (setf (nth 1 res) 'Git)
 	 res)))))
 
+(use-package js
+  :config
+  (define-key js-mode-map (kbd "M-.") nil))
+
 (use-package eglot
   :bind
   ("C-." . eglot-code-actions)
@@ -78,6 +88,10 @@
   ("M-p" . flymake-goto-prev-error)
   ("M-n" . flymake-goto-next-error))
 
+(use-package flymake-kondor
+  :hook (clojure-mode . flymake-kondor-setup)
+  :hook (clojure-mode . flymake-mode))
+
 (add-to-list 'auto-mode-alist '("\\.tsx?\\'" . tsx-ts-mode))
 
 (custom-set-variables
@@ -87,8 +101,15 @@
  ;; If there is more than one, they won't work right.
  '(auto-save-default nil)
  '(blink-cursor-mode nil)
+ '(cider-connection-message-fn nil)
+ '(cider-eldoc-display-for-symbol-at-point nil)
+ '(cider-repl-display-help-banner nil)
+ '(cider-repl-prompt-function 'cider-repl-prompt-lastname)
+ '(cider-save-file-on-load t)
+ '(cider-use-tooltips nil)
  '(column-number-mode t)
  '(compilation-ask-about-save nil)
+ '(corfu-auto t)
  '(create-lockfiles nil)
  '(default-frame-alist '((width . 90) (height . 40)))
  '(dired-free-space nil)
@@ -100,14 +121,16 @@
  '(indent-tabs-mode nil)
  '(inhibit-startup-screen t)
  '(initial-scratch-message nil)
+ '(js-indent-level 2)
  '(js-switch-indent-offset 2)
  '(make-backup-files nil)
  '(package-selected-packages
-   '(doom-themes vertico modus-themes magit rust-mode consult orderless))
- '(project-vc-extra-root-markers '("Cargo.toml" "package.json"))
+   '(highlight zones magit highlight-thing flymake-kondor cider clojure-mode corfu leuven-theme doom-themes vertico modus-themes rust-mode consult orderless))
+ '(project-vc-extra-root-markers '("project.clj" "package.json" "Cargo.toml"))
  '(ring-bell-function 'ignore)
  '(scroll-bar-mode nil)
  '(tool-bar-mode nil)
+ '(tooltip-mode nil)
  '(typescript-ts-mode-indent-offset 4))
 (put 'upcase-region 'disabled nil)
 (custom-set-faces
@@ -115,4 +138,7 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:family "Hack" :foundry "outline" :slant normal :weight regular :height 102 :width normal)))))
+ '(default ((t (:family "Fira Code" :foundry "outline" :slant normal :weight regular :height 102 :width normal))))
+ '(cider-fringe-good-face ((t (:foreground "black"))))
+ '(cider-test-failure-face ((t (:background "orange red" :foreground "white")))))
+(put 'downcase-region 'disabled nil)
