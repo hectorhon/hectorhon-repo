@@ -42,10 +42,6 @@
 
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
-(package-initialize)
-
-;; (use-package highlight-thing
-;;   :init (global-highlight-thing-mode))
 
 (use-package savehist
   :init (savehist-mode))
@@ -54,29 +50,37 @@
   :init (vertico-mode)
   :config (setq completion-in-region-function #'consult-completion-in-region))
 
+(use-package corfu
+  :init (global-corfu-mode))
+
 (use-package orderless
   :init (setq completion-styles '(orderless basic)
 	      completion-category-defaults nil
 	      completion-category-overrides nil
               completion-ignore-case t))
 
-(use-package corfu
-  :init (global-corfu-mode))
+;; (use-package highlight-thing
+;;   :init (global-highlight-thing-mode))
 
-(use-package project
-  :config
-  (advice-add
-   #'project-try-vc
-   :around
-   (lambda (orig-fun &rest args)
-     (let ((res (apply orig-fun args)))
-       (when res
-	 (setf (nth 1 res) 'Git)
-	 res)))))
+;; (use-package zones)
+
+;; (use-package highlight)
+
+;; (use-package project
+;;   :config
+;;   (advice-add
+;;    #'project-try-vc
+;;    :around
+;;    (lambda (orig-fun &rest args)
+;;      (let ((res (apply orig-fun args)))
+;;        (when res
+;; 	 (setf (nth 1 res) 'Git)
+;; 	 res)))))
 
 (use-package js
   :config
-  (define-key js-mode-map (kbd "M-.") nil))
+  (define-key js-mode-map (kbd "M-.") nil)
+  (setq js--declaration-keyword-re ""))
 
 (use-package eglot
   :bind
@@ -92,7 +96,9 @@
   :hook (clojure-mode . flymake-kondor-setup)
   :hook (clojure-mode . flymake-mode))
 
-(add-to-list 'auto-mode-alist '("\\.tsx?\\'" . tsx-ts-mode))
+;; (add-to-list 'auto-mode-alist '("\\.tsx?\\'" . tsx-ts-mode))
+;; (add-to-list 'auto-mode-alist '("\\.jsx\\'" . tsx-ts-mode))
+;; (add-to-list 'auto-mode-alist '("\\.js\\'" . tsx-ts-mode))
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -109,9 +115,8 @@
  '(cider-use-tooltips nil)
  '(column-number-mode t)
  '(compilation-ask-about-save nil)
- '(corfu-auto t)
  '(create-lockfiles nil)
- '(default-frame-alist '((width . 90) (height . 40)))
+ '(default-frame-alist '((width . 90) (height . 32)))
  '(dired-free-space nil)
  '(eglot-confirm-server-initiated-edits nil)
  '(eglot-ignored-server-capabilities
@@ -125,20 +130,19 @@
  '(js-switch-indent-offset 2)
  '(make-backup-files nil)
  '(package-selected-packages
-   '(highlight zones magit highlight-thing flymake-kondor cider clojure-mode corfu leuven-theme doom-themes vertico modus-themes rust-mode consult orderless))
+   '(cider clojure-mode consult corfu flymake flymake-kondor magit orderless vertico))
  '(project-vc-extra-root-markers '("project.clj" "package.json" "Cargo.toml"))
  '(ring-bell-function 'ignore)
  '(scroll-bar-mode nil)
  '(tool-bar-mode nil)
- '(tooltip-mode nil)
- '(typescript-ts-mode-indent-offset 4))
+ '(tooltip-mode nil))
 (put 'upcase-region 'disabled nil)
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:family "Fira Code" :foundry "outline" :slant normal :weight regular :height 102 :width normal))))
+ '(default ((t (:family "Hack" :foundry "outline" :slant normal :weight regular :height 102 :width normal))))
  '(cider-fringe-good-face ((t (:foreground "black"))))
  '(cider-test-failure-face ((t (:background "orange red" :foreground "white")))))
 (put 'downcase-region 'disabled nil)
