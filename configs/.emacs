@@ -66,16 +66,16 @@
 
 ;; (use-package highlight)
 
-;; (use-package project
-;;   :config
-;;   (advice-add
-;;    #'project-try-vc
-;;    :around
-;;    (lambda (orig-fun &rest args)
-;;      (let ((res (apply orig-fun args)))
-;;        (when res
-;; 	 (setf (nth 1 res) 'Git)
-;; 	 res)))))
+(use-package project
+  :config
+  (advice-add
+   #'project-try-vc
+   :around
+   (lambda (orig-fun &rest args)
+     (let ((res (apply orig-fun args)))
+       (when res
+	 (setf (nth 1 res) 'Git)
+	 res)))))
 
 (use-package js
   :config
@@ -142,7 +142,7 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:family "Hack" :foundry "outline" :slant normal :weight regular :height 102 :width normal))))
+ '(default ((t (:family "Hack" :foundry "outline" :slant normal :weight regular :height 90 :width normal))))
  '(cider-fringe-good-face ((t (:foreground "black"))))
  '(cider-test-failure-face ((t (:background "orange red" :foreground "white")))))
 (put 'downcase-region 'disabled nil)
