@@ -40,6 +40,22 @@
       (message filename))))
 (global-set-key (kbd "C-c z") (quote copy-buffer-file-name))
 
+(defun clojure-find-test-file (src-file-path)
+  (let ((other-file-directory
+         (replace-regexp-in-string "/src/"
+                                   "/test/"
+                                   (file-name-directory src-file-path)))
+        (other-file-name-base
+         (concat (file-name-base src-file-path) "_test"))
+        (other-file-extension
+         ".clj"))
+    (list (concat other-file-directory
+                  other-file-name-base
+                  other-file-extension))))
+
+(defvar clj-other-file-alist
+  (list (list "\\.clj\\'" 'clojure-find-test-file)))
+
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
 
@@ -58,6 +74,12 @@
 	      completion-category-defaults nil
 	      completion-category-overrides nil
               completion-ignore-case t))
+
+(use-package hideshow
+  :hook (prog-mode . hs-minor-mode)
+  :config
+  (define-key hs-minor-mode-map (kbd "C-c <left>") 'hs-hide-block)
+  (define-key hs-minor-mode-map (kbd "C-c <right>") 'hs-show-block))
 
 ;; (use-package highlight-thing
 ;;   :init (global-highlight-thing-mode))
@@ -80,6 +102,7 @@
 (use-package js
   :config
   (define-key js-mode-map (kbd "M-.") nil)
+  (define-key js-ts-mode-map (kbd "M-.") nil)
   (setq js--declaration-keyword-re ""))
 
 (use-package eglot
@@ -92,13 +115,13 @@
   ("M-p" . flymake-goto-prev-error)
   ("M-n" . flymake-goto-next-error))
 
-(use-package flymake-kondor
-  :hook (clojure-mode . flymake-kondor-setup)
-  :hook (clojure-mode . flymake-mode))
+;; (use-package flymake-kondor
+;;   :hook (clojure-mode . flymake-kondor-setup)
+;;   :hook (clojure-mode . flymake-mode))
 
 ;; (add-to-list 'auto-mode-alist '("\\.tsx?\\'" . tsx-ts-mode))
-;; (add-to-list 'auto-mode-alist '("\\.jsx\\'" . tsx-ts-mode))
-;; (add-to-list 'auto-mode-alist '("\\.js\\'" . tsx-ts-mode))
+(add-to-list 'auto-mode-alist '("\\.jsx\\'" . js-ts-mode))
+;; (add-to-list 'auto-mode-alist '("\\.js\\'" . js-ts-mode))
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -112,16 +135,17 @@
  '(cider-repl-display-help-banner nil)
  '(cider-repl-prompt-function 'cider-repl-prompt-lastname)
  '(cider-save-file-on-load t)
+ '(cider-test-fail-fast nil)
  '(cider-use-tooltips nil)
  '(column-number-mode t)
  '(compilation-ask-about-save nil)
  '(create-lockfiles nil)
- '(default-frame-alist '((width . 90) (height . 32)))
  '(dired-free-space nil)
  '(eglot-confirm-server-initiated-edits nil)
  '(eglot-ignored-server-capabilities
    '(:codeLensProvider :documentOnTypeFormattingProvider :documentLinkProvider :colorProvider :inlayHintProvider))
  '(eldoc-echo-area-use-multiline-p 1)
+ '(ff-other-file-alist '(("\\.clj\\'" clojure-find-test-file)))
  '(global-auto-revert-mode t)
  '(indent-tabs-mode nil)
  '(inhibit-startup-screen t)
@@ -142,7 +166,7 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:family "Hack" :foundry "outline" :slant normal :weight regular :height 90 :width normal))))
+ '(default ((t (:family "Hack" :foundry "outline" :slant normal :weight regular :height 102 :width normal))))
  '(cider-fringe-good-face ((t (:foreground "black"))))
  '(cider-test-failure-face ((t (:background "orange red" :foreground "white")))))
 (put 'downcase-region 'disabled nil)
