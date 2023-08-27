@@ -81,12 +81,11 @@
   (define-key hs-minor-mode-map (kbd "C-c <left>") 'hs-hide-block)
   (define-key hs-minor-mode-map (kbd "C-c <right>") 'hs-show-block))
 
-;; (use-package highlight-thing
-;;   :init (global-highlight-thing-mode))
-
-;; (use-package zones)
-
-;; (use-package highlight)
+(use-package symbol-overlay
+  :hook (prog-mode . symbol-overlay-mode)
+  :config
+  (define-key symbol-overlay-mode-map (kbd "M-i") 'symbol-overlay-put)
+  (define-key symbol-overlay-mode-map (kbd "<f8>") 'symbol-overlay-remove-all))
 
 (use-package project
   :config
@@ -140,7 +139,11 @@
  '(column-number-mode t)
  '(compilation-ask-about-save nil)
  '(create-lockfiles nil)
+ '(custom-enabled-themes '(ef-light))
+ '(custom-safe-themes t)
  '(dired-free-space nil)
+ '(display-time-default-load-average nil)
+ '(display-time-mode t)
  '(eglot-confirm-server-initiated-edits nil)
  '(eglot-ignored-server-capabilities
    '(:codeLensProvider :documentOnTypeFormattingProvider :documentLinkProvider :colorProvider :inlayHintProvider))
@@ -154,7 +157,7 @@
  '(js-switch-indent-offset 2)
  '(make-backup-files nil)
  '(package-selected-packages
-   '(cider clojure-mode consult corfu flymake flymake-kondor magit orderless vertico))
+   '(symbol-overlay solarized-theme spacemacs-theme leuven-theme ef-themes modus-themes cider clojure-mode consult corfu flymake magit orderless vertico))
  '(project-vc-extra-root-markers '("project.clj" "package.json" "Cargo.toml"))
  '(ring-bell-function 'ignore)
  '(scroll-bar-mode nil)
@@ -166,7 +169,11 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:family "Hack" :foundry "outline" :slant normal :weight regular :height 102 :width normal))))
+ '(default ((t (:family "Hack" :foundry "outline" :slant normal :weight regular :height 108 :width normal))))
  '(cider-fringe-good-face ((t (:foreground "black"))))
- '(cider-test-failure-face ((t (:background "orange red" :foreground "white")))))
+ '(cider-test-error-face ((t (:background "orange red" :foreground "white"))))
+ '(cider-test-failure-face ((t (:background "red" :foreground "white"))))
+ '(symbol-overlay-face-1 ((t (:background "dodger blue" :foreground "white"))))
+ '(symbol-overlay-face-2 ((t (:background "hot pink" :foreground "white"))))
+ '(symbol-overlay-face-3 ((t (:background "sea green" :foreground "white")))))
 (put 'downcase-region 'disabled nil)
