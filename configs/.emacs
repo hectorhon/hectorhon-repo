@@ -62,6 +62,18 @@
 (use-package savehist
   :init (savehist-mode))
 
+(use-package marginalia
+  :config (marginalia-mode))
+
+(use-package embark
+  :bind
+  (("C-," . embark-act)
+   ("C-;" . embark-dwim)
+   ("C-h B" . embark-bindings)))
+
+(use-package embark-consult
+  :hook (embark-collect-mode . consult-preview-at-point-mode))
+
 (use-package vertico
   :init (vertico-mode)
   :config (setq completion-in-region-function #'consult-completion-in-region))
@@ -86,6 +98,13 @@
   :config
   (define-key symbol-overlay-mode-map (kbd "M-i") 'symbol-overlay-put)
   (define-key symbol-overlay-mode-map (kbd "<f8>") 'symbol-overlay-remove-all))
+
+(use-package bm
+  :config
+  (global-set-key (kbd "<f5>") 'bm-toggle)
+  (global-set-key (kbd "S-<f5>") 'bm-show-all)
+  (global-set-key (kbd "<f6>") 'bm-previous)
+  (global-set-key (kbd "<f7>") 'bm-next))
 
 (use-package project
   :config
@@ -157,7 +176,7 @@
  '(js-switch-indent-offset 2)
  '(make-backup-files nil)
  '(package-selected-packages
-   '(symbol-overlay solarized-theme spacemacs-theme leuven-theme ef-themes modus-themes cider clojure-mode consult corfu flymake magit orderless vertico))
+   '(bm cider clojure-mode consult corfu ef-themes embark embark-consult flymake leuven-theme magit marginalia modus-themes orderless solarized-theme spacemacs-theme symbol-overlay vertico))
  '(project-vc-extra-root-markers '("project.clj" "package.json" "Cargo.toml"))
  '(ring-bell-function 'ignore)
  '(scroll-bar-mode nil)
