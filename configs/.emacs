@@ -2,6 +2,8 @@
                        (getenv "PATH")))
 (setq exec-path (cons "C:/Program Files/Git/usr/bin" exec-path))
 
+(add-to-list 'auto-mode-alist '("\\.js[mx]?\\'" . js-ts-mode))
+
 (windmove-default-keybindings)
 (global-set-key [M-down] 'scroll-up-line)
 (global-set-key [M-up] 'scroll-down-line)
@@ -40,71 +42,22 @@
       (message filename))))
 (global-set-key (kbd "C-c z") (quote copy-buffer-file-name))
 
-(defun clojure-find-test-file (src-file-path)
-  (let ((other-file-directory
-         (replace-regexp-in-string "/src/"
-                                   "/test/"
-                                   (file-name-directory src-file-path)))
-        (other-file-name-base
-         (concat (file-name-base src-file-path) "_test"))
-        (other-file-extension
-         ".clj"))
-    (list (concat other-file-directory
-                  other-file-name-base
-                  other-file-extension))))
-
-(defvar clj-other-file-alist
-  (list (list "\\.clj\\'" 'clojure-find-test-file)))
-
-(require 'package)
-(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
-
-(use-package savehist
-  :init (savehist-mode))
-
-(use-package marginalia
-  :config (marginalia-mode))
-
-(use-package embark
-  :bind
-  (("C-," . embark-act)
-   ("C-;" . embark-dwim)
-   ("C-h B" . embark-bindings)))
-
-(use-package embark-consult
-  :hook (embark-collect-mode . consult-preview-at-point-mode))
-
-(use-package vertico
-  :init (vertico-mode)
-  :config (setq completion-in-region-function #'consult-completion-in-region))
-
-(use-package corfu
-  :init (global-corfu-mode))
+(use-package dired
+  :config
+  (define-key dired-mode-map (kbd "<mouse-2>") 'dired-mouse-find-file))
 
 (use-package orderless
-  :init (setq completion-styles '(orderless basic)
-	      completion-category-defaults nil
-	      completion-category-overrides nil
-              completion-ignore-case t))
+  :init
+  (setq completion-styles '(orderless basic)
+        completion-category-defaults nil
+        completion-category-overrides '((file (styles partial-completion)))))
 
-(use-package hideshow
-  :hook (prog-mode . hs-minor-mode)
-  :config
-  (define-key hs-minor-mode-map (kbd "C-c <left>") 'hs-hide-block)
-  (define-key hs-minor-mode-map (kbd "C-c <right>") 'hs-show-block))
+(use-package vertico
+  :init
+  (vertico-mode))
 
-(use-package symbol-overlay
-  :hook (prog-mode . symbol-overlay-mode)
-  :config
-  (define-key symbol-overlay-mode-map (kbd "M-i") 'symbol-overlay-put)
-  (define-key symbol-overlay-mode-map (kbd "<f8>") 'symbol-overlay-remove-all))
-
-(use-package bm
-  :config
-  (global-set-key (kbd "<f5>") 'bm-toggle)
-  (global-set-key (kbd "S-<f5>") 'bm-show-all)
-  (global-set-key (kbd "<f6>") 'bm-previous)
-  (global-set-key (kbd "<f7>") 'bm-next))
+(use-package corfu
+  :hook (prog-mode . corfu-mode))
 
 (use-package project
   :config
@@ -114,32 +67,28 @@
    (lambda (orig-fun &rest args)
      (let ((res (apply orig-fun args)))
        (when res
-	 (setf (nth 1 res) 'Git)
-	 res)))))
+         (setf (nth 1 res) 'Git)
+         res)))))
 
 (use-package js
   :config
   (define-key js-mode-map (kbd "M-.") nil)
   (define-key js-ts-mode-map (kbd "M-.") nil)
-  (setq js--declaration-keyword-re ""))
-
-(use-package eglot
-  :bind
-  ("C-." . eglot-code-actions)
-  ("C-c C-r" . eglot-rename))
+  (setq js--declaration-keyword-re "")
+  (let ((js-rules (alist-get 'javascript js--treesit-indent-rules)))
+    (setf (alist-get '(node-is #1="switch_\\(?:case\\|default\\)")
+                     js-rules nil nil 'equal)
+          '(parent-bol 2))))
 
 (use-package flymake
   :bind
   ("M-p" . flymake-goto-prev-error)
   ("M-n" . flymake-goto-next-error))
 
-;; (use-package flymake-kondor
-;;   :hook (clojure-mode . flymake-kondor-setup)
-;;   :hook (clojure-mode . flymake-mode))
-
-;; (add-to-list 'auto-mode-alist '("\\.tsx?\\'" . tsx-ts-mode))
-(add-to-list 'auto-mode-alist '("\\.jsx\\'" . js-ts-mode))
-;; (add-to-list 'auto-mode-alist '("\\.js\\'" . js-ts-mode))
+(use-package flymake-eslint
+  :hook (eglot-managed-mode . (lambda ()
+                                (when (derived-mode-p 'js-ts-mode)
+                                  (flymake-eslint-enable)))))
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -148,51 +97,34 @@
  ;; If there is more than one, they won't work right.
  '(auto-save-default nil)
  '(blink-cursor-mode nil)
- '(cider-connection-message-fn nil)
- '(cider-eldoc-display-for-symbol-at-point nil)
- '(cider-repl-display-help-banner nil)
- '(cider-repl-prompt-function 'cider-repl-prompt-lastname)
- '(cider-save-file-on-load t)
- '(cider-test-fail-fast nil)
- '(cider-use-tooltips nil)
  '(column-number-mode t)
- '(compilation-ask-about-save nil)
  '(create-lockfiles nil)
- '(custom-enabled-themes '(ef-light))
+ '(custom-enabled-themes '(modus-operandi))
  '(custom-safe-themes t)
- '(dired-free-space nil)
- '(display-time-default-load-average nil)
- '(display-time-mode t)
  '(eglot-confirm-server-initiated-edits nil)
- '(eglot-ignored-server-capabilities
-   '(:codeLensProvider :documentOnTypeFormattingProvider :documentLinkProvider :colorProvider :inlayHintProvider))
- '(eldoc-echo-area-use-multiline-p 1)
- '(ff-other-file-alist '(("\\.clj\\'" clojure-find-test-file)))
+ '(eldoc-echo-area-use-multiline-p nil)
  '(global-auto-revert-mode t)
  '(indent-tabs-mode nil)
  '(inhibit-startup-screen t)
  '(initial-scratch-message nil)
  '(js-indent-level 2)
  '(js-switch-indent-offset 2)
+ '(magit-log-margin '(t "%Y-%m-%d %H:%M " magit-log-margin-width t 18))
  '(make-backup-files nil)
+ '(package-archives
+   '(("gnu" . "https://elpa.gnu.org/packages/")
+     ("nongnu" . "https://elpa.nongnu.org/nongnu/")
+     ("melpa" . "https://melpa.org/packages/")))
  '(package-selected-packages
-   '(bm cider clojure-mode consult corfu ef-themes embark embark-consult flymake leuven-theme magit marginalia modus-themes orderless solarized-theme spacemacs-theme symbol-overlay vertico))
+   '(flymake-eslint clojure-mode corfu magit modus-themes orderless cider clojure-ts-mode vertico))
  '(project-vc-extra-root-markers '("project.clj" "package.json" "Cargo.toml"))
  '(ring-bell-function 'ignore)
+ '(savehist-mode t)
  '(scroll-bar-mode nil)
- '(tool-bar-mode nil)
- '(tooltip-mode nil))
-(put 'upcase-region 'disabled nil)
+ '(tool-bar-mode nil))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:family "Hack" :foundry "outline" :slant normal :weight regular :height 108 :width normal))))
- '(cider-fringe-good-face ((t (:foreground "black"))))
- '(cider-test-error-face ((t (:background "orange red" :foreground "white"))))
- '(cider-test-failure-face ((t (:background "red" :foreground "white"))))
- '(symbol-overlay-face-1 ((t (:background "dodger blue" :foreground "white"))))
- '(symbol-overlay-face-2 ((t (:background "hot pink" :foreground "white"))))
- '(symbol-overlay-face-3 ((t (:background "sea green" :foreground "white")))))
-(put 'downcase-region 'disabled nil)
+ '(default ((t (:family "Ubuntu Sans Mono" :foundry "outline" :slant normal :weight regular :height 113 :width normal)))))
