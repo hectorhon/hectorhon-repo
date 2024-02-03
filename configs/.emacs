@@ -90,6 +90,21 @@
                                 (when (derived-mode-p 'js-ts-mode)
                                   (flymake-eslint-enable)))))
 
+(defun browse-current-clojure-ns ()
+  (interactive)
+  (let ((namespace (cider-current-ns)))
+    (with-current-buffer
+        (cider-popup-buffer cider-browse-ns-buffer 'select nil 'ancillary)
+      (cider-browse-ns--list
+       (current-buffer)
+       namespace
+       (cider-browse-ns--combined-vars-with-meta namespace)
+       namespace))))
+
+(use-package cider
+  :bind
+  ("C-h n" . browse-current-clojure-ns))
+
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -97,7 +112,11 @@
  ;; If there is more than one, they won't work right.
  '(auto-save-default nil)
  '(blink-cursor-mode nil)
+ '(cider-connection-message-fn 'cider-random-tip)
+ '(cider-repl-display-help-banner nil)
+ '(cider-save-file-on-load t)
  '(column-number-mode t)
+ '(compilation-ask-about-save nil)
  '(create-lockfiles nil)
  '(custom-enabled-themes '(modus-operandi))
  '(custom-safe-themes t)
