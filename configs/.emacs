@@ -4,6 +4,7 @@
 (setq exec-path
       (cons "C:/Users/hectorhon/repo/pocket/pocket-web-app-v2/node_modules/.bin"
             exec-path))
+(setq insert-directory-program "c:/Program Files/Git/usr/bin/ls.exe")
 
 (add-to-list 'auto-mode-alist '("\\.js[mx]?\\'" . js-ts-mode))
 (add-to-list 'auto-mode-alist '("\\.tsx?\\'" . tsx-ts-mode))
@@ -101,7 +102,24 @@
 
 (use-package dired
   :config
-  (define-key dired-mode-map (kbd "<mouse-2>") 'dired-mouse-find-file))
+  (define-key dired-mode-map (kbd "<mouse-2>") 'dired-mouse-find-file)
+  :init
+  (add-hook 'dired-after-readin-hook
+            (lambda ()
+              (let ((inhibit-read-only t))
+                (goto-char (point-min))
+                (let ((current-extension nil))
+                  (while (not (eobp))
+                    (let ((extension-at-line
+                           (let ((str (thing-at-point 'line t)))
+                             (if (string-match "\\(\\.[A-Za-z]+\\)$" str)
+                                 (match-string 0 str)
+                               nil))))
+                      (unless (string-equal current-extension extension-at-line)
+                        (goto-char (line-beginning-position))
+                        (insert "\n") ; (or extension-at-line "") "\n")
+                        (setq current-extension extension-at-line))
+                      (forward-line 1))))))))
 
 (use-package orderless
   :init
@@ -166,22 +184,21 @@
 (use-package eglot
   :bind
   ("C-." . eglot-code-actions)
-  ("C-c C-f" . eglot-format-buffer))
+  ("C-c C-f" . eglot-format-buffer)
+  ("C-c C-r" . eglot-rename))
 
 (use-package flymake
   :bind
   ("M-p" . flymake-goto-prev-error)
   ("M-n" . flymake-goto-next-error))
 
-;; (use-package flymake-eslint
-;;   :hook (eglot-managed-mode
-;;          .
-;;          (lambda ()
-;;            (when (derived-mode-p 'js-ts-mode
-;;                                  'typescript-ts-mode
-;;                                  'tsx-ts-mode)
-;;              (remove-hook 'flymake-diagnostic-functions 'eglot-flymake-backend)
-;;              (flymake-eslint-enable)))))
+(use-package flymake-eslint
+  :hook (eglot-managed-mode
+         .
+         (lambda ()
+           (when (derived-mode-p 'js-ts-mode)
+             (remove-hook 'flymake-diagnostic-functions 'eglot-flymake-backend)
+             (flymake-eslint-enable)))))
 
 (defun browse-current-clojure-ns ()
   (interactive)
@@ -217,14 +234,17 @@
  '(cider-test-fail-fast nil)
  '(clojure-ts-ensure-grammars nil)
  '(column-number-mode t)
+ '(company-idle-delay 1)
  '(compilation-ask-about-save nil)
  '(corfu-auto t)
  '(create-lockfiles nil)
  '(custom-enabled-themes '(modus-operandi))
  '(custom-safe-themes t)
  '(default-frame-alist '((vertical-scroll-bars)))
+ '(dired-listing-switches "-AlX")
  '(eglot-confirm-server-initiated-edits nil)
  '(eglot-ignored-server-capabilities '(:inlayHintProvider))
+ '(flymake-no-changes-timeout 1)
  '(global-auto-revert-mode t)
  '(global-corfu-mode t)
  '(global-whitespace-mode t)
@@ -233,6 +253,7 @@
  '(initial-scratch-message nil)
  '(js-indent-level 2)
  '(js-switch-indent-offset 2)
+ '(ls-lisp-use-insert-directory-program t)
  '(magit-log-margin '(t "%Y-%m-%d %H:%M " magit-log-margin-width t 18))
  '(make-backup-files nil)
  '(package-archives
@@ -240,7 +261,7 @@
      ("nongnu" . "https://elpa.nongnu.org/nongnu/")
      ("melpa" . "https://melpa.org/packages/")))
  '(package-selected-packages
-   '(apheleia yasnippet ef-themes leuven-theme company paredit scala-mode yaml-mode consult solarized-theme rust-mode flymake-eslint clojure-mode magit modus-themes orderless cider vertico))
+   '(treemacs imenu-list apheleia yasnippet ef-themes leuven-theme company paredit scala-mode yaml-mode consult solarized-theme rust-mode flymake-eslint clojure-mode magit modus-themes orderless cider vertico))
  '(project-vc-extra-root-markers '("project.clj" "package.json" "Cargo.toml" "build.sbt"))
  '(ring-bell-function 'ignore)
  '(rust-indent-offset 2)
@@ -248,6 +269,13 @@
  '(scroll-bar-mode nil)
  '(split-width-threshold 150)
  '(tool-bar-mode nil)
+ '(treemacs-display-in-side-window nil)
+ '(treemacs-filewatch-mode nil)
+ '(treemacs-follow-mode nil)
+ '(treemacs-fringe-indicator-mode nil)
+ '(treemacs-git-mode nil)
+ '(treemacs-no-delete-other-windows nil)
+ '(treemacs-width-is-initially-locked nil)
  '(whitespace-style '(face lines-tail)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
@@ -257,5 +285,5 @@
  '(default ((t (:family "Fira Code" :foundry "outline" :slant normal :weight regular :height 102 :width normal))))
  '(cider-error-overlay-face ((t (:extend t :background "orange red" :foreground "white"))))
  '(cider-test-failure-face ((t (:background "orange red" :foreground "white"))))
- '(whitespace-line ((t (:background "cornsilk")))))
+ '(whitespace-line ((t (:background "old lace" :foreground "#884900")))))
 (put 'downcase-region 'disabled nil)
