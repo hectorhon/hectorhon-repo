@@ -2,7 +2,7 @@
                        (getenv "PATH")))
 (setq exec-path (cons "C:/Program Files/Git/usr/bin" exec-path))
 (setq exec-path
-      (cons "C:/Users/hectorhon/repo/pocket/pocket-web-app-v2/node_modules/.bin"
+      (cons "C:/Users/hectorhon/repo/pocket/pocket-web-app-v3/node_modules/.bin"
             exec-path))
 (setq insert-directory-program "c:/Program Files/Git/usr/bin/ls.exe")
 
@@ -13,6 +13,8 @@
 (windmove-default-keybindings)
 (global-set-key [M-down] 'scroll-up-line)
 (global-set-key [M-up] 'scroll-down-line)
+(global-set-key [M-S-down] (lambda () (interactive) (scroll-other-window-down -1)))
+(global-set-key [M-S-up] (lambda () (interactive) (scroll-other-window-down 1)))
 (global-set-key (kbd "M-p") 'previous-error)
 (global-set-key (kbd "M-n") 'next-error)
 
@@ -103,23 +105,24 @@
 (use-package dired
   :config
   (define-key dired-mode-map (kbd "<mouse-2>") 'dired-mouse-find-file)
-  :init
-  (add-hook 'dired-after-readin-hook
-            (lambda ()
-              (let ((inhibit-read-only t))
-                (goto-char (point-min))
-                (let ((current-extension nil))
-                  (while (not (eobp))
-                    (let ((extension-at-line
-                           (let ((str (thing-at-point 'line t)))
-                             (if (string-match "\\(\\.[A-Za-z]+\\)$" str)
-                                 (match-string 0 str)
-                               nil))))
-                      (unless (string-equal current-extension extension-at-line)
-                        (goto-char (line-beginning-position))
-                        (insert "\n") ; (or extension-at-line "") "\n")
-                        (setq current-extension extension-at-line))
-                      (forward-line 1))))))))
+  ;; :init
+  ;; (add-hook 'dired-after-readin-hook
+  ;;           (lambda ()
+  ;;             (let ((inhibit-read-only t))
+  ;;               (goto-char (point-min))
+  ;;               (let ((current-extension nil))
+  ;;                 (while (not (eobp))
+  ;;                   (let ((extension-at-line
+  ;;                          (let ((str (thing-at-point 'line t)))
+  ;;                            (if (string-match "\\(\\.[A-Za-z]+\\)$" str)
+  ;;                                (match-string 0 str)
+  ;;                              nil))))
+  ;;                     (unless (string-equal current-extension extension-at-line)
+  ;;                       (goto-char (line-beginning-position))
+  ;;                       (insert "\n") ; (or extension-at-line "") "\n")
+  ;;                       (setq current-extension extension-at-line))
+  ;;                     (forward-line 1)))))))
+  )
 
 (use-package orderless
   :init
@@ -157,7 +160,10 @@
   ("C-c >" . hs-show-all))
 
 (use-package yasnippet
-  :init (yas-global-mode 1))
+  :config (yas-reload-all)
+  :hook (tsx-ts-mode . yas-minor-mode)
+  :hook (typescript-ts-mode . yas-minor-mode)
+  :hook (js-ts-mode . yas-minor-mode))
 
 (use-package js
   :config
@@ -175,11 +181,11 @@
   :hook (typescript-ts-mode . apheleia-mode)
   :hook (js-ts-mode . apheleia-mode))
 
-(use-package company
-  :hook (prog-mode . company-mode)
-  :bind
-  ("C-M-i" . company-complete)
-  (:map company-active-map ("<tab>" . company-complete-selection)))
+;; (use-package company
+;;   :hook (prog-mode . company-mode)
+;;   :bind
+;;   ("C-M-i" . company-complete)
+;;   (:map company-active-map ("<tab>" . company-complete-selection)))
 
 (use-package eglot
   :bind
@@ -199,6 +205,7 @@
            (when (derived-mode-p 'js-ts-mode)
              (remove-hook 'flymake-diagnostic-functions 'eglot-flymake-backend)
              (flymake-eslint-enable)))))
+;; :hook (js-ts-mode . flymake-eslint-enable))
 
 (defun browse-current-clojure-ns ()
   (interactive)
@@ -234,19 +241,14 @@
  '(cider-test-fail-fast nil)
  '(clojure-ts-ensure-grammars nil)
  '(column-number-mode t)
- '(company-idle-delay 1)
  '(compilation-ask-about-save nil)
- '(corfu-auto t)
  '(create-lockfiles nil)
  '(custom-enabled-themes '(modus-operandi))
  '(custom-safe-themes t)
  '(default-frame-alist '((vertical-scroll-bars)))
- '(dired-listing-switches "-AlX")
  '(eglot-confirm-server-initiated-edits nil)
  '(eglot-ignored-server-capabilities '(:inlayHintProvider))
- '(flymake-no-changes-timeout 1)
  '(global-auto-revert-mode t)
- '(global-corfu-mode t)
  '(global-whitespace-mode t)
  '(indent-tabs-mode nil)
  '(inhibit-startup-screen t)
