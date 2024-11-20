@@ -2,7 +2,7 @@
                        (getenv "PATH")))
 (setq exec-path (cons "C:/Program Files/Git/usr/bin" exec-path))
 (setq exec-path
-      (cons "C:/Users/hectorhon/repo/pocket/pocket-web-app-v3/node_modules/.bin"
+      (cons "C:/Users/hectorhon/repo/garden/garden-web-app/node_modules/.bin"
             exec-path))
 (setq insert-directory-program "c:/Program Files/Git/usr/bin/ls.exe")
 
@@ -130,6 +130,9 @@
         completion-category-defaults nil
         completion-category-overrides '((file (styles partial-completion)))))
 
+(use-package embark
+  :bind (("M-]" . embark-act)))
+
 (use-package consult
   :bind ("C-x r b" . consult-bookmark))
 
@@ -181,17 +184,23 @@
   :hook (typescript-ts-mode . apheleia-mode)
   :hook (js-ts-mode . apheleia-mode))
 
-;; (use-package company
-;;   :hook (prog-mode . company-mode)
-;;   :bind
-;;   ("C-M-i" . company-complete)
-;;   (:map company-active-map ("<tab>" . company-complete-selection)))
+(use-package company
+  :hook (prog-mode . company-mode))
+  ;; :bind
+  ;; ("C-M-i" . company-complete)
+  ;; (:map company-active-map ("<tab>" . company-complete-selection)))
 
 (use-package eglot
   :bind
   ("C-." . eglot-code-actions)
   ("C-c C-f" . eglot-format-buffer)
-  ("C-c C-r" . eglot-rename))
+  ("C-c C-r" . eglot-rename)
+  :config
+  (eglot--code-action eglot-code-action-organize-imports-ts
+                      "source.organizeImports.ts")
+  (add-hook 'before-save-hook (lambda ()
+                                (when (member major-mode '(tsx-ts-mode))
+                                  (eglot-code-action-organize-imports-ts 1)))))
 
 (use-package flymake
   :bind
@@ -239,13 +248,14 @@
  '(cider-repl-display-help-banner nil)
  '(cider-save-file-on-load t)
  '(cider-test-fail-fast nil)
+ '(cider-test-show-report-on-success t)
  '(clojure-ts-ensure-grammars nil)
  '(column-number-mode t)
  '(compilation-ask-about-save nil)
  '(create-lockfiles nil)
  '(custom-enabled-themes '(modus-operandi))
  '(custom-safe-themes t)
- '(default-frame-alist '((vertical-scroll-bars)))
+ '(default-frame-alist '((vertical-scroll-bars) (width . 90)))
  '(eglot-confirm-server-initiated-edits nil)
  '(eglot-ignored-server-capabilities '(:inlayHintProvider))
  '(global-auto-revert-mode t)
@@ -263,7 +273,7 @@
      ("nongnu" . "https://elpa.nongnu.org/nongnu/")
      ("melpa" . "https://melpa.org/packages/")))
  '(package-selected-packages
-   '(treemacs imenu-list apheleia yasnippet ef-themes leuven-theme company paredit scala-mode yaml-mode consult solarized-theme rust-mode flymake-eslint clojure-mode magit modus-themes orderless cider vertico))
+   '(embark embark-consult apheleia treemacs imenu-list yasnippet ef-themes leuven-theme company paredit scala-mode yaml-mode consult solarized-theme rust-mode flymake-eslint clojure-mode magit modus-themes orderless cider vertico))
  '(project-vc-extra-root-markers '("project.clj" "package.json" "Cargo.toml" "build.sbt"))
  '(ring-bell-function 'ignore)
  '(rust-indent-offset 2)
@@ -284,7 +294,7 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:family "Fira Code" :foundry "outline" :slant normal :weight regular :height 102 :width normal))))
+ '(default ((t (:family "Roboto Mono" :foundry "outline" :slant normal :weight regular :height 102 :width normal))))
  '(cider-error-overlay-face ((t (:extend t :background "orange red" :foreground "white"))))
  '(cider-test-failure-face ((t (:background "orange red" :foreground "white"))))
  '(whitespace-line ((t (:background "old lace" :foreground "#884900")))))
