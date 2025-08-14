@@ -198,9 +198,13 @@
   :config
   (eglot--code-action eglot-code-action-organize-imports-ts
                       "source.organizeImports.ts")
-  (add-hook 'before-save-hook (lambda ()
-                                (when (member major-mode '(tsx-ts-mode))
-                                  (eglot-code-action-organize-imports-ts 1)))))
+  (eglot--code-action eglot-code-action-remove-unused-imports-ts
+                      "source.removeUnusedImports.ts")
+  (add-hook 'before-save-hook
+            (lambda ()
+              (when (member major-mode '(tsx-ts-mode))
+                (eglot-code-action-organize-imports-ts 1)
+                (eglot-code-action-remove-unused-imports-ts 1)))))
 
 (use-package flymake
   :bind
@@ -255,7 +259,7 @@
  '(create-lockfiles nil)
  '(custom-enabled-themes '(modus-operandi))
  '(custom-safe-themes t)
- '(default-frame-alist '((vertical-scroll-bars) (width . 90)))
+ '(default-frame-alist '((vertical-scroll-bars)))
  '(eglot-confirm-server-initiated-edits nil)
  '(eglot-ignored-server-capabilities '(:inlayHintProvider))
  '(global-auto-revert-mode t)
@@ -294,7 +298,7 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:family "Roboto Mono" :foundry "outline" :slant normal :weight regular :height 102 :width normal))))
+ '(default ((t (:family "Iosevka" :foundry "outline" :slant normal :weight regular :height 120 :width normal))))
  '(cider-error-overlay-face ((t (:extend t :background "orange red" :foreground "white"))))
  '(cider-test-failure-face ((t (:background "orange red" :foreground "white"))))
  '(whitespace-line ((t (:background "old lace" :foreground "#884900")))))
