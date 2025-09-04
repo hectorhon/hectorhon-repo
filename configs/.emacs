@@ -1,24 +1,14 @@
-(setenv "PATH" (concat "c:/Program Files/Git/usr/bin;"
-                       (getenv "PATH")))
-(setq exec-path (cons "C:/Program Files/Git/usr/bin" exec-path))
-(setq exec-path
-      (cons "C:/Users/hectorhon/repo/garden/garden-web-app/node_modules/.bin"
-            exec-path))
-(setq insert-directory-program "c:/Program Files/Git/usr/bin/ls.exe")
+;;; -*- lexical-binding: t -*-
 
-(add-to-list 'auto-mode-alist '("\\.js[mx]?\\'" . js-ts-mode))
-(add-to-list 'auto-mode-alist '("\\.tsx?\\'" . tsx-ts-mode))
-(add-to-list 'auto-mode-alist '("\\.ts?\\'" . typescript-ts-mode))
+(setq exec-path (cons "C:/Program Files/Git/usr/bin" exec-path))
+
+(require 'package)
+(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
+(package-initialize)
 
 (windmove-default-keybindings)
 (global-set-key [M-down] 'scroll-up-line)
 (global-set-key [M-up] 'scroll-down-line)
-(global-set-key [M-S-down] (lambda () (interactive) (scroll-other-window-down -1)))
-(global-set-key [M-S-up] (lambda () (interactive) (scroll-other-window-down 1)))
-(global-set-key (kbd "M-p") 'previous-error)
-(global-set-key (kbd "M-n") 'next-error)
-
-;; (mapconcat 'buffer-name (buffer-list) "\n")
 
 (defun open-next-line (arg)
   (interactive "p")
@@ -52,194 +42,137 @@
       (message filename))))
 (global-set-key (kbd "C-c z") (quote copy-buffer-file-name))
 
-(require 'xref)
-(defun hectorhon/xref--insert-xrefs (xref-alist)
-  (require 'compile) ; For the compilation faces.
-  (cl-loop for (group . xrefs) in xref-alist
-           for max-line = (cl-loop for xref in xrefs
-                                   maximize (xref-location-line
-                                             (xref-item-location xref)))
-           for line-format = (and max-line
-                                  (format
-                                   #("%%%dd:" 0 4 (face xref-line-number) 5 6 (face shadow))
-                                   (1+ (floor (log max-line 10)))))
-           with item-text-props = (list 'mouse-face 'highlight
-                                        'keymap xref--button-map
-                                        'help-echo
-                                        (concat "mouse-2: display in another window, "
-                                                "RET or mouse-1: follow reference"))
-           with prev-group = nil
-           with prev-line = nil
-           do
-           (xref--insert-propertized '(face xref-file-header xref-group t)
-                                     "\n" group "\n")
-           (dolist (xref xrefs)
-             (pcase-let (((cl-struct xref-item summary location) xref))
-               (let* ((line (xref-location-line location))
-                      (prefix
-                       (cond
-                        ((not line) "  ")
-                        ((and (equal line prev-line)
-                              (equal prev-group group))
-                         "")
-                        (t (format line-format line)))))
-                 ;; Render multiple matches on the same line, together.
-                 (when (and (equal prev-group group)
-                            (or (null line)
-                                (not (equal prev-line line))))
-                   (insert "\n"))
-                 (xref--insert-propertized (nconc (list 'xref-item xref)
-                                                  item-text-props)
-                                           prefix summary)
-                 (setq prev-line line
-                       prev-group group))))
-           (insert "\n"))
-  (add-to-invisibility-spec '(ellipsis . t))
-  (save-excursion
-    (goto-char (point-min))
-    (while (= 0 (forward-line 1))
-      (xref--apply-truncation)))
-  (run-hooks 'xref-after-update-hook))
-(advice-add 'xref--insert-xrefs :override #'hectorhon/xref--insert-xrefs)
-
-(use-package dired
-  :config
-  (define-key dired-mode-map (kbd "<mouse-2>") 'dired-mouse-find-file)
-  ;; :init
-  ;; (add-hook 'dired-after-readin-hook
-  ;;           (lambda ()
-  ;;             (let ((inhibit-read-only t))
-  ;;               (goto-char (point-min))
-  ;;               (let ((current-extension nil))
-  ;;                 (while (not (eobp))
-  ;;                   (let ((extension-at-line
-  ;;                          (let ((str (thing-at-point 'line t)))
-  ;;                            (if (string-match "\\(\\.[A-Za-z]+\\)$" str)
-  ;;                                (match-string 0 str)
-  ;;                              nil))))
-  ;;                     (unless (string-equal current-extension extension-at-line)
-  ;;                       (goto-char (line-beginning-position))
-  ;;                       (insert "\n") ; (or extension-at-line "") "\n")
-  ;;                       (setq current-extension extension-at-line))
-  ;;                     (forward-line 1)))))))
-  )
-
-(use-package orderless
-  :init
-  (setq completion-styles '(orderless basic)
-        completion-category-defaults nil
-        completion-category-overrides '((file (styles partial-completion)))))
-
-(use-package embark
-  :bind (("M-]" . embark-act)))
-
-(use-package consult
-  :bind ("C-x r b" . consult-bookmark))
-
-(use-package vertico
-  :init
-  (vertico-mode)
-  (setq completion-in-region-function
-        (lambda (&rest args)
-          (apply #'consult-completion-in-region args))))
-
-(use-package project
-  :config
-  (advice-add
-   #'project-try-vc
-   :around
-   (lambda (orig-fun &rest args)
-     (let ((res (apply orig-fun args)))
-       (when res
-         (setf (nth 1 res) 'Git)
-         res)))))
-
-(use-package hs-minor-mode
-  :hook (prog-mode . hs-minor-mode)
-  :bind
-  ("C-c <right>" . hs-show-block)
-  ("C-c <left>" . hs-hide-block)
-  ("C-c <" . hs-hide-all)
-  ("C-c >" . hs-show-all))
-
-(use-package yasnippet
-  :config (yas-reload-all)
-  :hook (tsx-ts-mode . yas-minor-mode)
-  :hook (typescript-ts-mode . yas-minor-mode)
-  :hook (js-ts-mode . yas-minor-mode))
-
-(use-package js
-  :config
-  (define-key js-mode-map (kbd "M-.") nil)
-  (define-key js-ts-mode-map (kbd "M-.") nil)
-  (setq js--declaration-keyword-re "")
-  (let ((js-rules (alist-get 'javascript js--treesit-indent-rules)))
-    (setf (alist-get '(node-is #1="switch_\\(?:case\\|default\\)")
-                     js-rules nil nil 'equal)
-          '(parent-bol 2))))
-
-(use-package apheleia
-  ;; :init (apheleia-global-mode +1))
-  :hook (tsx-ts-mode . apheleia-mode)
-  :hook (typescript-ts-mode . apheleia-mode)
-  :hook (js-ts-mode . apheleia-mode))
-
-(use-package company
-  :hook (prog-mode . company-mode))
-  ;; :bind
-  ;; ("C-M-i" . company-complete)
-  ;; (:map company-active-map ("<tab>" . company-complete-selection)))
-
-(use-package eglot
-  :bind
-  ("C-." . eglot-code-actions)
-  ("C-c C-f" . eglot-format-buffer)
-  ("C-c C-r" . eglot-rename)
-  :config
-  (eglot--code-action eglot-code-action-organize-imports-ts
-                      "source.organizeImports.ts")
-  (eglot--code-action eglot-code-action-remove-unused-imports-ts
-                      "source.removeUnusedImports.ts")
-  (add-hook 'before-save-hook
-            (lambda ()
-              (when (member major-mode '(tsx-ts-mode))
-                (eglot-code-action-organize-imports-ts 1)
-                (eglot-code-action-remove-unused-imports-ts 1)))))
-
 (use-package flymake
   :bind
   ("M-p" . flymake-goto-prev-error)
   ("M-n" . flymake-goto-next-error))
 
+(defun flymake-eslint-enable-local (orig-fun &rest args)
+  (when (and (buffer-file-name)
+             (project-current)
+             (file-exists-p (file-name-concat
+                             (project-root (project-current))
+                             "package.json")))
+    (let ((node-modules-bin-path
+           (file-name-concat (project-root (project-current))
+                             "node_modules/.bin")))
+      (unless (member node-modules-bin-path exec-path)
+        (setq-local exec-path (cons node-modules-bin-path exec-path)))))
+  (if (not (executable-find flymake-eslint-executable-name))
+      (message "Can't find eslint on exec-path")
+    (apply orig-fun args)))
+
 (use-package flymake-eslint
-  :hook (eglot-managed-mode
-         .
-         (lambda ()
-           (when (derived-mode-p 'js-ts-mode)
-             (remove-hook 'flymake-diagnostic-functions 'eglot-flymake-backend)
-             (flymake-eslint-enable)))))
-;; :hook (js-ts-mode . flymake-eslint-enable))
-
-(defun browse-current-clojure-ns ()
-  (interactive)
-  (let ((namespace (cider-current-ns)))
-    (with-current-buffer
-        (cider-popup-buffer cider-browse-ns-buffer 'select nil 'ancillary)
-      (cider-browse-ns--list
-       (current-buffer)
-       namespace
-       (cider-browse-ns--combined-vars-with-meta namespace)
-       namespace))))
-
-(use-package cider
-  :bind
-  ("C-h n" . browse-current-clojure-ns)
   :init
-  (add-hook 'eglot-managed-mode-hook
-            (lambda ()
-              (if (eq major-mode 'cider-mode)
-                  (setq completion-at-point-functions
-                        '(cider-complete-at-point t))))))
+  (advice-add 'flymake-eslint-enable :around #'flymake-eslint-enable-local))
+
+(use-package treesit-fold
+  :load-path "C:/Users/hectorhon/repo/third/treesit-fold")
+
+(use-package typescript-ts-mode)
+
+(use-package yaml-ts-mode)
+
+(use-package bicep-ts-mode)
+
+(use-package powershell-ts-mode
+  :load-path "C:/Users/hectorhon/repo/third/powershell-ts-mode"
+  :config
+  (with-eval-after-load 'eglot
+    (message "Adding powershell lsp server to eglot")
+    (add-to-list
+     'eglot-server-programs
+     `(powershell-ts-mode
+       . ("pwsh"
+          "-OutputFormat" "Text"
+          "-File"
+          ,(expand-file-name ".cache/powershell/Start-EditorServices.ps1"
+                             user-emacs-directory)
+          "-Stdio"
+          "-HostVersion" "1.0"
+          "-HostName" "Emacs"
+          "-HostProfileId" "Emacs.Eglot"
+          "-SessionDetailsPath"
+          ,(expand-file-name "eglot-powershell" temporary-file-directory)
+          "-BundledModulesPath"
+          ,(expand-file-name ".cache/powershell"))))))
+
+(use-package angular-ts-mode
+  :load-path "c:/Users/hectorhon/.emacs.d/site-lisp")
+
+(defun eslint-enable-for-js-projects ()
+  (when (file-exists-p
+         (file-name-concat
+          (project-root (project-current)) "package.json"))
+    (flymake-eslint-enable)))
+
+(defun typescript-organize-imports ()
+  (when (and eglot--managed-mode
+             (member major-mode '(typescript-ts-mode)))
+    (eglot-code-action-organize-imports-ts 1)
+    (eglot-code-action-remove-unused-imports-ts 1)))
+
+(use-package eglot
+  :bind
+  ("C-." . eglot-code-actions)
+  :hook
+  (eglot-managed-mode . eslint-enable-for-js-projects)
+  :config
+  (eglot--code-action eglot-code-action-organize-imports-ts
+                      "source.organizeImports.ts")
+  (eglot--code-action eglot-code-action-remove-unused-imports-ts
+                      "source.removeUnusedImports.ts")
+  (add-hook 'before-save-hook #'typescript-organize-imports)
+  (progn
+    (add-to-list
+     'eglot-server-programs
+     '((angular-ts-mode :language-id "html")
+       "ngserver"
+       "--tsProbeLocations"
+       "c:/Users/hectorhon/AppData/Roaming/npm/node_modules"
+       "--ngProbeLocations"
+       "c:/Users/hectorhon/AppData/Roaming/npm/node_modules"
+       "--logToConsole"
+       "--stdio"))))
+
+(use-package orderless
+  :ensure t
+  :custom
+  (completion-styles '(orderless basic))
+  (completion-category-overrides '((file (styles basic partial-completion)))))
+
+(use-package vertico
+  :init
+  (vertico-mode))
+
+(use-package consult
+  :bind
+  (("M-s r" . consult-ripgrep)
+   ("M-s d" . consult-find)
+   ("M-s l" . consult-line))
+  :init
+  (setq completion-in-region-function #'consult-completion-in-region))
+
+(use-package embark
+  :bind
+  (("C-;" . embark-act)))
+
+(use-package embark-consult
+  :hook
+  (embark-collect-mode . consult-preview-at-point-mode))
+
+(use-package apheleia
+  :hook
+  ((typescript-ts-mode . apheleia-mode)
+   (angular-ts-mode . apheleia-mode)
+   (js-mode . apheleia-mode)
+   (js-json-mode . apheleia-mode))
+  :config
+  (setf (alist-get 'prettier-html apheleia-formatters)
+        '("apheleia-npx" "prettier" "--stdin-filepath" filepath
+          "--parser=angular"
+          (apheleia-formatters-js-indent "--use-tabs"
+					 "--tab-width"))))
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -248,58 +181,28 @@
  ;; If there is more than one, they won't work right.
  '(auto-save-default nil)
  '(blink-cursor-mode nil)
- '(cider-connection-message-fn 'cider-random-tip)
- '(cider-repl-display-help-banner nil)
- '(cider-save-file-on-load t)
- '(cider-test-fail-fast nil)
- '(cider-test-show-report-on-success t)
- '(clojure-ts-ensure-grammars nil)
  '(column-number-mode t)
- '(compilation-ask-about-save nil)
  '(create-lockfiles nil)
  '(custom-enabled-themes '(modus-operandi))
- '(custom-safe-themes t)
- '(default-frame-alist '((vertical-scroll-bars)))
- '(eglot-confirm-server-initiated-edits nil)
- '(eglot-ignored-server-capabilities '(:inlayHintProvider))
- '(global-auto-revert-mode t)
- '(global-whitespace-mode t)
+ '(custom-safe-themes
+   '("9af2b1c0728d278281d87dc91ead7f5d9f2287b1ed66ec8941e97ab7a6ab73c0"
+     "01f347a923dd21661412d4c5a7c7655bf17fb311b57ddbdbd6fce87bd7e58de6"
+     default))
+ '(enable-recursive-minibuffers t)
  '(indent-tabs-mode nil)
  '(inhibit-startup-screen t)
- '(initial-scratch-message nil)
  '(js-indent-level 2)
- '(js-switch-indent-offset 2)
- '(ls-lisp-use-insert-directory-program t)
- '(magit-log-margin '(t "%Y-%m-%d %H:%M " magit-log-margin-width t 18))
  '(make-backup-files nil)
- '(package-archives
-   '(("gnu" . "https://elpa.gnu.org/packages/")
-     ("nongnu" . "https://elpa.nongnu.org/nongnu/")
-     ("melpa" . "https://melpa.org/packages/")))
  '(package-selected-packages
-   '(embark embark-consult apheleia treemacs imenu-list yasnippet ef-themes leuven-theme company paredit scala-mode yaml-mode consult solarized-theme rust-mode flymake-eslint clojure-mode magit modus-themes orderless cider vertico))
- '(project-vc-extra-root-markers '("project.clj" "package.json" "Cargo.toml" "build.sbt"))
- '(ring-bell-function 'ignore)
- '(rust-indent-offset 2)
+   '(apheleia bicep-ts-mode consult embark embark-consult flymake-eslint
+              magit orderless spacemacs-theme vertico))
+ '(project-vc-extra-root-markers '("package.json"))
  '(savehist-mode t)
  '(scroll-bar-mode nil)
- '(split-width-threshold 150)
- '(tool-bar-mode nil)
- '(treemacs-display-in-side-window nil)
- '(treemacs-filewatch-mode nil)
- '(treemacs-follow-mode nil)
- '(treemacs-fringe-indicator-mode nil)
- '(treemacs-git-mode nil)
- '(treemacs-no-delete-other-windows nil)
- '(treemacs-width-is-initially-locked nil)
- '(whitespace-style '(face lines-tail)))
+ '(tool-bar-mode nil))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:family "Iosevka" :foundry "outline" :slant normal :weight regular :height 120 :width normal))))
- '(cider-error-overlay-face ((t (:extend t :background "orange red" :foreground "white"))))
- '(cider-test-failure-face ((t (:background "orange red" :foreground "white"))))
- '(whitespace-line ((t (:background "old lace" :foreground "#884900")))))
-(put 'downcase-region 'disabled nil)
+ '(default ((t (:family "JetBrains Mono" :foundry "outline" :slant normal :weight regular :height 113 :width normal)))))
